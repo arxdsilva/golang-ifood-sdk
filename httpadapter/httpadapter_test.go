@@ -3,10 +3,11 @@ package httpadapter
 import (
 	"bytes"
 	"errors"
-	"github.com/raulinoneto/golang-ifood-sdk/mocks"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +23,7 @@ func TestHttpAdapter_Do_Success(t *testing.T) {
 		Body:       body,
 	}
 	clientMock.On("Do", request).Once().Return(expectedResp, nil)
-	adapter := New(clientMock,"test")
+	adapter := New(clientMock, "test")
 	resp, status, err := adapter.DoRequest(http.MethodPost, "/", nil, nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
@@ -32,7 +33,7 @@ func TestHttpAdapter_Do_Success(t *testing.T) {
 func TestHttpAdapter_Do_Error(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodPost, "test/", nil)
 	clientMock.On("Do", request).Once().Return(nil, errors.New("error"))
-	adapter := New(clientMock,"test")
+	adapter := New(clientMock, "test")
 	resp, status, err := adapter.DoRequest(http.MethodPost, "/", nil, nil)
 	assert.Nil(t, resp)
 	assert.NotNil(t, err)

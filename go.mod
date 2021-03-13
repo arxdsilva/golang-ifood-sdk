@@ -1,4 +1,4 @@
-module github.com/raulinoneto/golang-ifood-sdk
+module github.com/arxdsilva/golang-ifood-sdk
 
 go 1.15
 

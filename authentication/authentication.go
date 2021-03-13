@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/raulinoneto/golang-ifood-sdk/container"
-	"github.com/raulinoneto/golang-ifood-sdk/httpadapter"
+	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	"github.com/arxdsilva/golang-ifood-sdk/httpadapter"
 )
 
 const (
@@ -36,12 +36,12 @@ type (
 	}
 
 	authService struct {
-		adapter                container.HttpAdapter
+		adapter                adapters.Http
 		clientId, clientSecret string
 	}
 )
 
-func New(adapter container.HttpAdapter, clientId, clientSecret string) *authService {
+func New(adapter adapters.Http, clientId, clientSecret string) *authService {
 	return &authService{adapter, clientId, clientSecret}
 }
 
