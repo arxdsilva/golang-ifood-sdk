@@ -17,16 +17,16 @@ type HTTPClient interface {
 }
 
 type httpAdapter struct {
-	client HTTPClient
+	client  HTTPClient
 	baseUrl string
 }
 
-var(
+var (
 	ErrorNilData = errors.New("No data to parse ")
 )
 
 func New(client HTTPClient, baseUrl string) *httpAdapter {
-	return &httpAdapter{client,baseUrl}
+	return &httpAdapter{client, baseUrl}
 }
 
 func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers map[string]string) ([]byte, int, error) {
@@ -34,7 +34,6 @@ func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers m
 	if err != nil {
 		return nil, 0, err
 	}
-
 	for k, v := range headers {
 		request.Header.Add(k, v)
 	}
@@ -82,9 +81,8 @@ func NewMultipartReader(data interface{}) (reader io.Reader, boundary string, er
 	return bytes.NewReader(body.Bytes()), writer.Boundary(), nil
 }
 
-func getWriter (body *bytes.Buffer, data []byte) (*multipart.Writer, error) {
+func getWriter(body *bytes.Buffer, data []byte) (*multipart.Writer, error) {
 	writer := multipart.NewWriter(body)
-
 	metadataHeader := textproto.MIMEHeader{}
 	metadataHeader.Set("Content-Type", "application/json")
 	metadataHeader.Set("Content-ID", "metadata")
@@ -108,7 +106,7 @@ func getWriter (body *bytes.Buffer, data []byte) (*multipart.Writer, error) {
 	return writer, nil
 }
 
-func closeBodyReader(reader io.ReadCloser){
+func closeBodyReader(reader io.ReadCloser) {
 	if err := reader.Close(); err != nil {
 		log.Printf("Error on closeBodyReader %e", err)
 	}

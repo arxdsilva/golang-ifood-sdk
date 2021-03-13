@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
-	"github.com/arxdsilva/golang-ifood-sdk/httpadapter"
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 	valueGrantType = "password"
 )
 
-var ErrUnauthorized = errors.New("")
+var ErrUnauthorized = errors.New("Unauthorized")
 
 type (
 	Service interface {
@@ -53,7 +53,6 @@ func (a *authService) Authenticate(username, password string) (*Credentials, err
 		Username:     username,
 		Password:     password,
 	}
-
 	reader, boundary, err := httpadapter.NewMultipartReader(auth)
 	if err != nil {
 		return nil, err
@@ -61,7 +60,6 @@ func (a *authService) Authenticate(username, password string) (*Credentials, err
 	headers := make(map[string]string)
 	headers["Content-Type"] = fmt.Sprintf("multipart/related; boundary=%s", boundary)
 	headers["Accept"] = "*/*"
-
 	_, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
 	if err != nil {
 		return nil, err

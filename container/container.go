@@ -5,16 +5,18 @@ import (
 	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	"github.com/arxdsilva/golang-ifood-sdk/authentication"
-	"github.com/arxdsilva/golang-ifood-sdk/httpadapter"
+	"github.com/arxdsilva/golang-ifood-sdk/merchants"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 )
 
 type container struct {
-	env         int
-	timeout     time.Duration
-	httpadapter adapters.Http
-	authService authentication.Service
+	env              int
+	timeout          time.Duration
+	httpadapter      adapters.Http
+	authService      authentication.Service
+	merchantsService merchants.Service
 }
 
 func New(env int, timeout time.Duration) *container {
