@@ -1,13 +1,14 @@
 package authentication
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
-	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	"github.com/kpango/glg"
 )
 
 const (
@@ -48,27 +49,28 @@ func New(adapter adapters.Http, clientId, clientSecret string) *authService {
 }
 
 func (a *authService) Authenticate(username, password string) (c *Credentials, err error) {
-	auth := Authentication{
-		ClientId:     a.clientId,
-		ClientSecret: a.clientSecret,
-		GrantType:    valueGrantType,
-		Username:     username,
-		Password:     password,
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	writer.WriteField("client_id", a.clientId)
+	writer.WriteField("client_secret", a.clientSecret)
+	writer.WriteField("grant_type", valueGrantType)
+	writer.WriteField("username", username)
+	writer.WriteField("password", password)
+	if err = writer.Close(); err != nil {
+		return
 	}
-	reader, boundary, err := httpadapter.NewMultipartReader(auth)
-	if err != nil {
-		return nil, err
-	}
+	reader := bytes.NewReader(payload.Bytes())
 	headers := make(map[string]string)
-	headers["Content-Type"] = fmt.Sprintf("multipart/related; boundary=%s", boundary)
+	headers["Content-Type"] = writer.FormDataContentType()
 	headers["Accept"] = "*/*"
 	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
 	if err != nil {
 		return
 	}
 	if status != http.StatusOK {
+		glg.Info("[SDK] Auth: status code ", status)
 		err = ErrUnauthorized
 		return
 	}
-	return c, json.Unmarshal(resp, c)
+	return c, json.Unmarshal(resp, &c)
 }
