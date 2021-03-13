@@ -6,10 +6,11 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+
+	"github.com/kpango/glg"
 )
 
 type HTTPClient interface {
@@ -23,6 +24,7 @@ type httpAdapter struct {
 
 var (
 	ErrorNilData = errors.New("No data to parse ")
+	ErrorNilAuth = errors.New("No auth to parse ")
 )
 
 func New(client HTTPClient, baseUrl string) *httpAdapter {
@@ -52,7 +54,7 @@ func NewJsonReader(data interface{}) (io.Reader, error) {
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		log.Printf("Error on makeReader marshaling json data: %e", err)
+		glg.Printf("Error on makeReader marshaling json data: %e", err)
 		return nil, errors.New("error on marshal data: " + err.Error())
 	}
 	return bytes.NewReader(jsonData), nil
@@ -66,18 +68,16 @@ func NewMultipartReader(data interface{}) (reader io.Reader, boundary string, er
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		err = errors.New("error on marshal data: " + err.Error())
-		log.Printf("Error on makeReader marshaling json data: %e", err)
+		glg.Printf("Error on makeReader marshaling json data: %e", err)
 		return
 	}
-
 	body := &bytes.Buffer{}
 	writer, err := getWriter(body, jsonData)
 	if err != nil {
 		err = errors.New("error on create part data: " + err.Error())
-		log.Printf("Error on writing metadata headers: %v", err)
+		glg.Printf("Error on writing metadata headers: %v", err)
 		return
 	}
-
 	return bytes.NewReader(body.Bytes()), writer.Boundary(), nil
 }
 
@@ -89,18 +89,18 @@ func getWriter(body *bytes.Buffer, data []byte) (*multipart.Writer, error) {
 	part, err := writer.CreatePart(metadataHeader)
 	if err != nil {
 		err = errors.New("error on create part data: " + err.Error())
-		log.Printf("Error on writing metadata headers: %v", err)
+		glg.Printf("Error on writing metadata headers: %v", err)
 		return nil, err
 	}
 	_, err = part.Write(data)
 	if err != nil {
 		err = errors.New("error on create part data: " + err.Error())
-		log.Printf("Error on writing data: %v", err)
+		glg.Printf("Error on writing data: %v", err)
 		return nil, err
 	}
 	if err := writer.Close(); err != nil {
 		err = errors.New("error on create part data: " + err.Error())
-		log.Fatalf("Error closing multipart writer: %v", err)
+		glg.Fatalf("Error closing multipart writer: %v", err)
 		return nil, err
 	}
 	return writer, nil
@@ -108,6 +108,6 @@ func getWriter(body *bytes.Buffer, data []byte) (*multipart.Writer, error) {
 
 func closeBodyReader(reader io.ReadCloser) {
 	if err := reader.Close(); err != nil {
-		log.Printf("Error on closeBodyReader %e", err)
+		glg.Printf("Error on closeBodyReader %e", err)
 	}
 }

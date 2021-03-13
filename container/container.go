@@ -9,6 +9,7 @@ import (
 	"github.com/arxdsilva/golang-ifood-sdk/authentication"
 	"github.com/arxdsilva/golang-ifood-sdk/merchant"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
+	"github.com/kpango/glg"
 )
 
 type container struct {
@@ -42,6 +43,10 @@ func (c *container) GetHttpAdapter() adapters.Http {
 }
 
 func (c container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
+	if c.httpadapter == nil {
+		glg.Info("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
 	if c.authService == nil {
 		c.authService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret)
 	}
@@ -49,6 +54,10 @@ func (c container) GetAuthenticationService(clientId, clientSecret string) authe
 }
 
 func (c container) GetMerchantsService(authToken string) merchant.Service {
+	if c.httpadapter == nil {
+		glg.Info("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
 	if c.merchantService == nil {
 		c.merchantService = merchant.New(c.GetHttpAdapter(), authToken)
 	}
