@@ -15,17 +15,24 @@ import (
 )
 
 func main() {
-    var clientID, clientSecret string
+    var clientID, clientSecret, user, password string
     clientID = os.GetEnv("CLIENT_ID")
     clientSecret = os.GetEnv("CLIENT_SECRET")
     container := sdk.New(0, time.Minute)
     container.GetHttpAdapter()
     auth := container.GetAuthenticationService(clientID, clientSecret)
+    user = os.GetEnv("USER")
+    password = os.GetEnv("PASSWORD")
     creds, err := auth.Authenticate(user,password)
-    // err check
-    var token string
+    if err != nil { 
+        log.Fatal(err) 
+    }
     merchant := container.GetMerchantService(creds.AccessToken)
     merchants, err := merchant.ListAll()
-    // err check
+    if err != nil { 
+        log.Fatal(err) 
+    }
+    fmt.Printf("creds: %+v\n", creds)
+    fmt.Printf("merchants: %+v\n", merchants)
 }
 ```
