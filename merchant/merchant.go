@@ -3,9 +3,11 @@ package merchant
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	"github.com/kpango/glg"
 )
 
 const (
@@ -36,11 +38,13 @@ func New(adapter adapters.Http, authToken string) *merchantService {
 
 func (m *merchantService) ListAll() (ml []Merchant, err error) {
 	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.authToken)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, merchantsV1Endpoint, nil, headers)
 	if err != nil {
 		return
 	}
 	if status != http.StatusOK {
+		glg.Warn("[SDK] Merchant ListAll status code: ", status)
 		err = ErrBadRequest
 		return
 	}
