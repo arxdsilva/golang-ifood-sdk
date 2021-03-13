@@ -1,10 +1,10 @@
 package authentication
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
@@ -31,8 +31,10 @@ type (
 	}
 
 	Credentials struct {
-		Key            string
-		ExpirationDate time.Time
+		AccessToken string `json:"access_token"`
+		TokenType   string `json:"token_type"`
+		Scope       string `json:"scope"`
+		ExpiresIn   int    `json:"expires_in"`
 	}
 
 	authService struct {
@@ -45,7 +47,7 @@ func New(adapter adapters.Http, clientId, clientSecret string) *authService {
 	return &authService{adapter, clientId, clientSecret}
 }
 
-func (a *authService) Authenticate(username, password string) (*Credentials, error) {
+func (a *authService) Authenticate(username, password string) (c *Credentials, err error) {
 	auth := Authentication{
 		ClientId:     a.clientId,
 		ClientSecret: a.clientSecret,
@@ -60,12 +62,13 @@ func (a *authService) Authenticate(username, password string) (*Credentials, err
 	headers := make(map[string]string)
 	headers["Content-Type"] = fmt.Sprintf("multipart/related; boundary=%s", boundary)
 	headers["Accept"] = "*/*"
-	_, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
 	if err != nil {
-		return nil, err
+		return
 	}
 	if status != http.StatusOK {
-		return nil, ErrUnauthorized
+		err = ErrUnauthorized
+		return
 	}
-	return nil, nil
+	return c, json.Unmarshal(resp, c)
 }
