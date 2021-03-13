@@ -68,7 +68,7 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 		return
 	}
 	if status != http.StatusOK {
-		glg.Info("[SDK] Auth: status code ", status)
+		glg.Warn("[SDK] Auth: status code ", status)
 		err = ErrUnauthorized
 		return
 	}

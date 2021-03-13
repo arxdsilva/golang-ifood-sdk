@@ -44,7 +44,7 @@ func (c *container) GetHttpAdapter() adapters.Http {
 
 func (c container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
 	if c.httpadapter == nil {
-		glg.Info("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
 		return nil
 	}
 	if c.authService == nil {
@@ -53,9 +53,9 @@ func (c container) GetAuthenticationService(clientId, clientSecret string) authe
 	return c.authService
 }
 
-func (c container) GetMerchantsService(authToken string) merchant.Service {
+func (c container) GetMerchantService(authToken string) merchant.Service {
 	if c.httpadapter == nil {
-		glg.Info("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
 		return nil
 	}
 	if c.merchantService == nil {
