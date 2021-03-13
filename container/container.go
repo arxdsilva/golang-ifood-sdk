@@ -8,6 +8,7 @@ import (
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	"github.com/arxdsilva/golang-ifood-sdk/authentication"
 	"github.com/arxdsilva/golang-ifood-sdk/catalog"
+	"github.com/arxdsilva/golang-ifood-sdk/events"
 	"github.com/arxdsilva/golang-ifood-sdk/merchant"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 	"github.com/kpango/glg"
@@ -20,6 +21,7 @@ type container struct {
 	authService     authentication.Service
 	merchantService merchant.Service
 	catalogService  catalog.Service
+	eventsService   events.Service
 }
 
 func New(env int, timeout time.Duration) *container {
@@ -75,4 +77,15 @@ func (c container) GetCatalogService(authToken string) catalog.Service {
 		c.catalogService = catalog.New(c.GetHttpAdapter(), authToken)
 	}
 	return c.catalogService
+}
+
+func (c container) GetEventsService(authToken string) events.Service {
+	if c.httpadapter == nil {
+		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
+	if c.eventsService == nil {
+		c.eventsService = events.New(c.GetHttpAdapter(), authToken)
+	}
+	return c.eventsService
 }
