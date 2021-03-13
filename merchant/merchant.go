@@ -41,6 +41,7 @@ func (m *merchantService) ListAll() (ml []Merchant, err error) {
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.authToken)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, merchantsV1Endpoint, nil, headers)
 	if err != nil {
+		glg.Error("[SDK] Merchant ListAll adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {

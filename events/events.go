@@ -51,7 +51,7 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 	endpoint := V3Endpoint + ":polling"
 	resp, status, err := ev.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
-		glg.Warn("[SDK] Event adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
@@ -68,7 +68,7 @@ func (ev *eventService) Acknowledge(events []Event) (err error) {
 	}
 	ackJSONB, err := json.Marshal(eACK)
 	if err != nil {
-		glg.Warn("[SDK] Event Acknowledge marshal: ", err.Error())
+		glg.Error("[SDK] Event Acknowledge marshal: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -78,7 +78,7 @@ func (ev *eventService) Acknowledge(events []Event) (err error) {
 	endpoint := V3Endpoint + ":polling"
 	_, status, err := ev.adapter.DoRequest(http.MethodGet, endpoint, ackJSONB, headers)
 	if err != nil {
-		glg.Warn("[SDK] Event adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status == http.StatusUnauthorized {

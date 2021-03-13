@@ -57,6 +57,7 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 	writer.WriteField("username", username)
 	writer.WriteField("password", password)
 	if err = writer.Close(); err != nil {
+		glg.Error("[SDK] Auth writer.Close: ", err.Error())
 		return
 	}
 	reader := bytes.NewReader(payload.Bytes())
@@ -65,6 +66,7 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 	headers["Accept"] = "*/*"
 	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
 	if err != nil {
+		glg.Error("[SDK] Auth adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {

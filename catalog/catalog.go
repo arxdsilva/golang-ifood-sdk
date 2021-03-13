@@ -46,10 +46,11 @@ func (m *catalogService) ListAll(merchantID string) (ct Catalogs, err error) {
 	endpoint := catalogV2Endpoint + fmt.Sprintf(listAllEndpoint, merchantID)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
+		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] Merchant ListAll status code: ", status)
+		glg.Warn("[SDK] Catalog ListAll status code: ", status)
 		err = ErrBadRequest
 		return
 	}
