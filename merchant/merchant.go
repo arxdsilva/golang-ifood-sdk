@@ -16,7 +16,7 @@ var ErrBadRequest = errors.New("Bad request")
 
 type (
 	Service interface {
-		List() ([]Merchant, error)
+		ListAll() ([]Merchant, error)
 	}
 
 	Merchant struct {
@@ -34,7 +34,7 @@ func New(adapter adapters.Http, authToken string) *merchantService {
 	return &merchantService{adapter, authToken}
 }
 
-func (m *merchantService) List() (ml []Merchant, err error) {
+func (m *merchantService) ListAll() (ml []Merchant, err error) {
 	headers := make(map[string]string)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, merchantsV1Endpoint, nil, headers)
 	if err != nil {
