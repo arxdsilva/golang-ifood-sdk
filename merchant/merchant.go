@@ -1,4 +1,4 @@
-package merchants
+package merchant
 
 import (
 	"encoding/json"
@@ -24,17 +24,17 @@ type (
 		Name string `json:"name"`
 	}
 
-	merchantsService struct {
+	merchantService struct {
 		adapter   adapters.Http
 		authToken string
 	}
 )
 
-func New(adapter adapters.Http, authToken string) *merchantsService {
-	return &merchantsService{adapter, authToken}
+func New(adapter adapters.Http, authToken string) *merchantService {
+	return &merchantService{adapter, authToken}
 }
 
-func (m *merchantsService) List() (ml []Merchant, err error) {
+func (m *merchantService) List() (ml []Merchant, err error) {
 	headers := make(map[string]string)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, merchantsV1Endpoint, nil, headers)
 	if err != nil {

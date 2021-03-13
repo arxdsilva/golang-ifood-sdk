@@ -7,16 +7,16 @@ import (
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	"github.com/arxdsilva/golang-ifood-sdk/authentication"
-	"github.com/arxdsilva/golang-ifood-sdk/merchants"
+	"github.com/arxdsilva/golang-ifood-sdk/merchant"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 )
 
 type container struct {
-	env              int
-	timeout          time.Duration
-	httpadapter      adapters.Http
-	authService      authentication.Service
-	merchantsService merchants.Service
+	env             int
+	timeout         time.Duration
+	httpadapter     adapters.Http
+	authService     authentication.Service
+	merchantService merchant.Service
 }
 
 func New(env int, timeout time.Duration) *container {
@@ -46,4 +46,11 @@ func (c container) GetAuthenticationService(clientId, clientSecret string) authe
 		c.authService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret)
 	}
 	return c.authService
+}
+
+func (c container) GetMerchantsService(authToken string) merchant.Service {
+	if c.merchantService == nil {
+		c.merchantService = merchant.New(c.GetHttpAdapter(), authToken)
+	}
+	return c.merchantService
 }
