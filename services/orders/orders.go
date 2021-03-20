@@ -144,7 +144,7 @@ func (o *ordersService) IntegrateOrder(reference string) (err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s", V3Endpoint, reference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/integration", V1Endpoint, reference)
 	_, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders IntegrateOrder adapter.DoRequest error: ", err.Error())
