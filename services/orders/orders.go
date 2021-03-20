@@ -24,6 +24,7 @@ type (
 	Service interface {
 		GetDetails(reference string) (OrderDetails, error)
 		Integrate(reference string) error
+		Confirm(reference string) error
 	}
 
 	OrderDetails struct {
@@ -145,7 +146,7 @@ func (o *ordersService) Integrate(orderReference string) (err error) {
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
 	endpoint := fmt.Sprintf("%s/%s/statuses/integration", V1Endpoint, orderReference)
-	_, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders Integrate adapter.DoRequest error: ", err.Error())
 		return
@@ -153,6 +154,28 @@ func (o *ordersService) Integrate(orderReference string) (err error) {
 	if status != http.StatusOK {
 		glg.Error("[SDK] Orders Integrate status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order orderReference %s could not be integrated", orderReference)
+		return
+	}
+	return
+}
+
+func (o *ordersService) Confirm(orderReference string) (err error) {
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/statuses/confirmation", V1Endpoint, orderReference)
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders Confirm adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Orders Confirm status code: ", status, " orderReference: ", orderReference)
+		err = fmt.Errorf("Order orderReference %s could not be confirmed", orderReference)
 		return
 	}
 	return
