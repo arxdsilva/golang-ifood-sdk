@@ -21,6 +21,7 @@ type (
 		GetDetails(reference string) (OrderDetails, error)
 		SetIntegrateStatus(reference string) error
 		SetConfirmStatus(reference string) error
+		SetDispatchStatus(reference string) error
 	}
 
 	OrderDetails struct {
@@ -171,6 +172,28 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
+		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
+		return
+	}
+	return
+}
+
+func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Orders SetDispatchStatus auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/statuses/dispatch", V1Endpoint, orderReference)
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders SetDispatchStatus adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders SetDispatchStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
 		return
 	}
