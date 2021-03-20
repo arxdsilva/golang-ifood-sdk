@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	V1Endpoint = "/v1.0/orders"
 	V3Endpoint = "/v3.0/orders"
 )
 
@@ -22,6 +23,7 @@ var ErrBadRequest = errors.New("Bad request")
 type (
 	Service interface {
 		GetOrderDetails(reference string) (OrderDetails, error)
+		IntegrateOrder(reference string) error
 	}
 
 	OrderDetails struct {
@@ -123,13 +125,35 @@ func (o *ordersService) GetOrderDetails(reference string) (od *OrderDetails, err
 	endpoint := fmt.Sprintf("%s/%s", V3Endpoint, reference)
 	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Orders ListAll adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Orders GetOrderDetails adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] Orders ListAll status code: ", status)
+		glg.Warn("[SDK] Orders GetOrderDetails status code: ", status)
 		err = ErrBadRequest
 		return
 	}
 	return od, json.Unmarshal(resp, od)
+}
+
+func (o *ordersService) IntegrateOrder(reference string) (err error) {
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s", V3Endpoint, reference)
+	_, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders IntegrateOrder adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Orders IntegrateOrder status code: ", status, " reference: ", reference)
+		err = fmt.Errorf("Order reference %s could not be integrated", reference)
+		return
+	}
+	return
 }
