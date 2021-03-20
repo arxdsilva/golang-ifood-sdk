@@ -46,7 +46,7 @@ func (c *container) GetHttpAdapter() adapters.Http {
 	return c.httpadapter
 }
 
-func (c container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
+func (c *container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
 		return nil
@@ -57,35 +57,47 @@ func (c container) GetAuthenticationService(clientId, clientSecret string) authe
 	return c.authService
 }
 
-func (c container) GetMerchantService(authToken string) merchant.Service {
+func (c *container) GetMerchantService() merchant.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetMerchantService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
+	if c.authService == nil {
+		glg.Warn("[GetMerchantService]: please set the authentication service")
 		return nil
 	}
 	if c.merchantService == nil {
-		c.merchantService = merchant.New(c.GetHttpAdapter(), authToken)
+		c.merchantService = merchant.New(c.GetHttpAdapter(), c.authService)
 	}
 	return c.merchantService
 }
 
-func (c container) GetCatalogService(authToken string) catalog.Service {
+func (c *container) GetCatalogService() catalog.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetCatalogService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
+	if c.authService == nil {
+		glg.Warn("[GetCatalogService]: please set the authentication service")
 		return nil
 	}
 	if c.catalogService == nil {
-		c.catalogService = catalog.New(c.GetHttpAdapter(), authToken)
+		c.catalogService = catalog.New(c.GetHttpAdapter(), c.authService)
 	}
 	return c.catalogService
 }
 
-func (c container) GetEventsService(authToken string) events.Service {
+func (c *container) GetEventsService() events.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetEventsService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		return nil
+	}
+	if c.authService == nil {
+		glg.Warn("[GetEventsService]: please set the authentication service")
 		return nil
 	}
 	if c.eventsService == nil {
-		c.eventsService = events.New(c.GetHttpAdapter(), authToken)
+		c.eventsService = events.New(c.GetHttpAdapter(), c.authService)
 	}
 	return c.eventsService
 }

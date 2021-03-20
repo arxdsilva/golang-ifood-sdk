@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	auth "github.com/arxdsilva/golang-ifood-sdk/authentication"
 	"github.com/kpango/glg"
 )
 
@@ -36,20 +38,26 @@ type (
 	}
 
 	eventService struct {
-		adapter   adapters.Http
-		authToken string
+		adapter adapters.Http
+		auth    auth.Service
 	}
 )
 
-func New(adapter adapters.Http, authToken string) *eventService {
-	return &eventService{adapter, authToken}
+func New(adapter adapters.Http, authService auth.Service) *eventService {
+	return &eventService{adapter, authService}
 }
 
 func (ev *eventService) Poll() (ml []Event, err error) {
+	err = ev.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Event auth.Validate: ", err.Error())
+		return
+	}
 	headers := make(map[string]string)
-	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.authToken)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
 	endpoint := V3Endpoint + ":polling"
-	resp, status, err := ev.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	resp, status, err := ev.adapter.DoRequest(
+		http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return
@@ -62,21 +70,27 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 }
 
 func (ev *eventService) Acknowledge(events []Event) (err error) {
+	err = ev.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Event auth.Validate: ", err.Error())
+		return
+	}
 	eACK := []eventACK{}
 	for _, e := range events {
 		eACK = append(eACK, eventACK{e.ID})
 	}
-	ackJSONB, err := json.Marshal(eACK)
+	reader, err := httpadapter.NewJsonReader(eACK)
 	if err != nil {
-		glg.Error("[SDK] Event Acknowledge marshal: ", err.Error())
+		glg.Error("[SDK] Event NewJsonReader: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	headers["Cache-Control"] = "no-cache"
-	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.authToken)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
 	endpoint := V3Endpoint + ":polling"
-	_, status, err := ev.adapter.DoRequest(http.MethodGet, endpoint, ackJSONB, headers)
+	_, status, err := ev.adapter.DoRequest(
+		http.MethodGet, endpoint, reader, headers)
 	if err != nil {
 		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return

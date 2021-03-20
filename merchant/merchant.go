@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	auth "github.com/arxdsilva/golang-ifood-sdk/authentication"
 	"github.com/kpango/glg"
 )
 
@@ -27,18 +28,23 @@ type (
 	}
 
 	merchantService struct {
-		adapter   adapters.Http
-		authToken string
+		adapter adapters.Http
+		auth    auth.Service
 	}
 )
 
-func New(adapter adapters.Http, authToken string) *merchantService {
-	return &merchantService{adapter, authToken}
+func New(adapter adapters.Http, authService auth.Service) *merchantService {
+	return &merchantService{adapter, authService}
 }
 
 func (m *merchantService) ListAll() (ml []Merchant, err error) {
+	err = m.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Merchant auth.Validate: ", err.Error())
+		return
+	}
 	headers := make(map[string]string)
-	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.authToken)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, merchantsV1Endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Merchant ListAll adapter.DoRequest error: ", err.Error())

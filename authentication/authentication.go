@@ -6,6 +6,7 @@ import (
 	"errors"
 	"mime/multipart"
 	"net/http"
+	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	"github.com/kpango/glg"
@@ -21,6 +22,8 @@ var ErrUnauthorized = errors.New("Unauthorized")
 type (
 	Service interface {
 		Authenticate(username, password string) (*Credentials, error)
+		Validate() error
+		GetToken() string
 	}
 
 	Authentication struct {
@@ -41,11 +44,14 @@ type (
 	authService struct {
 		adapter                adapters.Http
 		clientId, clientSecret string
+		username, password     string
+		currentExpiration      time.Time
+		Token                  string
 	}
 )
 
 func New(adapter adapters.Http, clientId, clientSecret string) *authService {
-	return &authService{adapter, clientId, clientSecret}
+	return &authService{adapter: adapter, clientId: clientId, clientSecret: clientSecret}
 }
 
 func (a *authService) Authenticate(username, password string) (c *Credentials, err error) {
@@ -74,5 +80,26 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 		err = ErrUnauthorized
 		return
 	}
-	return c, json.Unmarshal(resp, &c)
+	if err = json.Unmarshal(resp, &c); err != nil {
+		return
+	}
+	glg.Info("[SDK] Authenticate success")
+	a.currentExpiration = time.Now().Add(time.Hour)
+	a.username = username
+	a.password = password
+	a.Token = c.AccessToken
+	return
+}
+
+func (a *authService) Validate() (err error) {
+	if !time.Now().After(a.currentExpiration) {
+		return
+	}
+	glg.Info("[SDK] Renew Auth")
+	_, err = a.Authenticate(a.username, a.password)
+	return
+}
+
+func (a *authService) GetToken() (token string) {
+	return a.Token
 }

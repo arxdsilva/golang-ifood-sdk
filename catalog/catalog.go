@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	auth "github.com/arxdsilva/golang-ifood-sdk/authentication"
 	"github.com/kpango/glg"
 )
 
@@ -23,8 +24,8 @@ type (
 	}
 
 	catalogService struct {
-		adapter   adapters.Http
-		authToken string
+		adapter adapters.Http
+		auth    auth.Service
 	}
 
 	Catalogs []Catalog
@@ -36,15 +37,20 @@ type (
 	}
 )
 
-func New(adapter adapters.Http, authToken string) *catalogService {
-	return &catalogService{adapter, authToken}
+func New(adapter adapters.Http, authService auth.Service) *catalogService {
+	return &catalogService{adapter, authService}
 }
 
-func (m *catalogService) ListAll(merchantID string) (ct Catalogs, err error) {
+func (c *catalogService) ListAll(merchantID string) (ct Catalogs, err error) {
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog auth.Validate: ", err.Error())
+		return
+	}
 	headers := make(map[string]string)
-	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.authToken)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	endpoint := catalogV2Endpoint + fmt.Sprintf(listAllEndpoint, merchantID)
-	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
 		return
