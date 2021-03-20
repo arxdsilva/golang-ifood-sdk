@@ -23,8 +23,21 @@ type (
 	}
 
 	Merchant struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
+		ID      string   `json:"id"`
+		Name    string   `json:"name"`
+		Phones  []string `json:"phones"`
+		Address Address  `json:"address"`
+	}
+
+	Address struct {
+		Formattedaddress string `json:"formattedAddress"`
+		Country          string `json:"country"`
+		State            string `json:"state"`
+		City             string `json:"city"`
+		Neighborhood     string `json:"neighborhood"`
+		Streetname       string `json:"streetName"`
+		Streetnumber     string `json:"streetNumber"`
+		Postalcode       string `json:"postalCode"`
 	}
 
 	merchantService struct {
