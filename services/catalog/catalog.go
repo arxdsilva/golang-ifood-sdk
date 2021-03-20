@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
-	auth "github.com/arxdsilva/golang-ifood-sdk/authentication"
+	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/kpango/glg"
 )
 

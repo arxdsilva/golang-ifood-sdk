@@ -6,11 +6,11 @@ import (
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
-	"github.com/arxdsilva/golang-ifood-sdk/authentication"
-	"github.com/arxdsilva/golang-ifood-sdk/catalog"
-	"github.com/arxdsilva/golang-ifood-sdk/events"
-	"github.com/arxdsilva/golang-ifood-sdk/merchant"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
+	"github.com/arxdsilva/golang-ifood-sdk/services/authentication"
+	"github.com/arxdsilva/golang-ifood-sdk/services/catalog"
+	"github.com/arxdsilva/golang-ifood-sdk/services/events"
+	"github.com/arxdsilva/golang-ifood-sdk/services/merchant"
 	"github.com/kpango/glg"
 )
 

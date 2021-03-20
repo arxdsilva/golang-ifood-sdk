@@ -9,7 +9,7 @@ import (
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
-	auth "github.com/arxdsilva/golang-ifood-sdk/authentication"
+	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/kpango/glg"
 )
 
