@@ -56,6 +56,7 @@ type (
 		SetDispatchStatus(reference string) error
 		SetReadyToDeliverStatus(reference string) error
 		SetCancelStatus(reference, code string) error
+		ClientCancellationStatus(reference string, accepted bool) error
 	}
 
 	OrderDetails struct {
@@ -320,6 +321,43 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 		glg.Error("[SDK] Orders SetCancelStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
 		glg.Error("[SDK] Orders SetCancelStatus err: ", err)
+		return
+	}
+	return
+}
+
+// ClientCancellationStatus lida com o cancelamento do pedido por parte do cliente
+//
+// link: https://developer.ifood.com.br/reference#handshake-cancelamento
+//
+// reference: order reference id
+// accepted: aceitacao pelo e-PDV do cancelamento do pedido
+func (o *ordersService) ClientCancellationStatus(orderReference string, accepted bool) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus: ", err.Error())
+		return
+	}
+	if err = o.auth.Validate(); err != nil {
+		glg.Error("[SDK] Orders AcceptCancelStatus auth.Validate: ", err.Error())
+		return
+	}
+	cancelStatus := "consumerCancellationDenied"
+	if accepted {
+		cancelStatus = "consumerCancellationAccepted"
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/statuses/%s", V2Endpoint, orderReference, cancelStatus)
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders AcceptCancelStatus adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders AcceptCancelStatus status code: ", status, " orderReference: ", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
+		glg.Error("[SDK] Orders AcceptCancelStatus err: ", err)
 		return
 	}
 	return
