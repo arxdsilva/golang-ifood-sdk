@@ -245,7 +245,7 @@ func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err erro
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/dispatch", V2Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/readyToDeliver", V2Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders SetReadyToDeliverStatus adapter.DoRequest error: ", err.Error())
