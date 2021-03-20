@@ -114,7 +114,7 @@ func New(adapter adapters.Http, authService auth.Service) *ordersService {
 	return &ordersService{adapter, authService}
 }
 
-func (o *ordersService) GetOrderDetails(reference string) (od *OrderDetails, err error) {
+func (o *ordersService) GetOrderDetails(reference string) (od OrderDetails, err error) {
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
@@ -133,7 +133,7 @@ func (o *ordersService) GetOrderDetails(reference string) (od *OrderDetails, err
 		err = ErrBadRequest
 		return
 	}
-	return od, json.Unmarshal(resp, od)
+	return od, json.Unmarshal(resp, &od)
 }
 
 func (o *ordersService) IntegrateOrder(reference string) (err error) {
