@@ -14,6 +14,7 @@ import (
 
 const (
 	V1Endpoint = "/v1.0/orders"
+	V2Endpoint = "/v2.0/orders"
 	V3Endpoint = "/v3.0/orders"
 )
 
@@ -25,6 +26,7 @@ type (
 		SetIntegrateStatus(reference string) error
 		SetConfirmStatus(reference string) error
 		SetDispatchStatus(reference string) error
+		SetReadyToDeliverStatus(reference string) error
 	}
 
 	OrderDetails struct {
@@ -134,8 +136,9 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] Orders GetDetails status code: ", status)
+		glg.Error("[SDK] Orders GetDetails status code: ", status)
 		err = fmt.Errorf("Order reference %s could not retrieve details", orderReference)
+		glg.Error("[SDK] Orders GetDetails err: ", err)
 		return
 	}
 	return od, json.Unmarshal(resp, &od)
@@ -162,6 +165,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetIntegrateStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference %s could not be integrated", orderReference)
+		glg.Error("[SDK] Orders SetIntegrateStatus err: ", err)
 		return
 	}
 	return
@@ -187,7 +191,8 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not be confirmed", orderReference)
+		glg.Error("[SDK] Orders SetConfirmStatus err: ", err)
 		return
 	}
 	return
@@ -213,7 +218,35 @@ func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetDispatchStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not be dispatched", orderReference)
+		glg.Error("[SDK] Orders SetDispatchStatus err: ", err)
+		return
+	}
+	return
+}
+
+func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/statuses/dispatch", V2Endpoint, orderReference)
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus status code: ", status, " orderReference: ", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus err: ", err)
 		return
 	}
 	return
