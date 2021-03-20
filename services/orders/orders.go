@@ -147,7 +147,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetIntegrateStatus adapter.DoRequest error: ", err.Error())
 		return
 	}
-	if status != http.StatusOK {
+	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetIntegrateStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference %s could not be integrated", orderReference)
 		return
@@ -169,7 +169,7 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetConfirmStatus adapter.DoRequest error: ", err.Error())
 		return
 	}
-	if status != http.StatusOK {
+	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
 		return
