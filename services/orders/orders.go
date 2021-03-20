@@ -2,6 +2,7 @@ package orders
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -15,6 +16,8 @@ const (
 	V1Endpoint = "/v1.0/orders"
 	V3Endpoint = "/v3.0/orders"
 )
+
+var ErrOrderReferenceNotSpecified = errors.New("Order reference not specified")
 
 type (
 	Service interface {
@@ -113,6 +116,10 @@ func New(adapter adapters.Http, authService auth.Service) *ordersService {
 }
 
 func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders GetDetails auth.Validate: ", err.Error())
@@ -135,6 +142,10 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 }
 
 func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders SetIntegrateStatus auth.Validate: ", err.Error())
@@ -157,6 +168,10 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 }
 
 func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders SetConfirmStatus auth.Validate: ", err.Error())
@@ -179,6 +194,10 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 }
 
 func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders SetDispatchStatus auth.Validate: ", err.Error())
