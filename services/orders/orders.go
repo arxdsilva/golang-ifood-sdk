@@ -23,8 +23,8 @@ var ErrBadRequest = errors.New("Bad request")
 type (
 	Service interface {
 		GetDetails(reference string) (OrderDetails, error)
-		Integrate(reference string) error
-		Confirm(reference string) error
+		SetIntegrateStatus(reference string) error
+		SetConfirmStatus(reference string) error
 	}
 
 	OrderDetails struct {
@@ -137,7 +137,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 	return od, json.Unmarshal(resp, &od)
 }
 
-func (o *ordersService) Integrate(orderReference string) (err error) {
+func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
@@ -148,18 +148,18 @@ func (o *ordersService) Integrate(orderReference string) (err error) {
 	endpoint := fmt.Sprintf("%s/%s/statuses/integration", V1Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Orders Integrate adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Orders SetIntegrateStatus adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Error("[SDK] Orders Integrate status code: ", status, " orderReference: ", orderReference)
+		glg.Error("[SDK] Orders SetIntegrateStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order orderReference %s could not be integrated", orderReference)
 		return
 	}
 	return
 }
 
-func (o *ordersService) Confirm(orderReference string) (err error) {
+func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	err = o.auth.Validate()
 	if err != nil {
 		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
@@ -170,11 +170,11 @@ func (o *ordersService) Confirm(orderReference string) (err error) {
 	endpoint := fmt.Sprintf("%s/%s/statuses/confirmation", V1Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Orders Confirm adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Orders SetConfirmStatus adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Error("[SDK] Orders Confirm status code: ", status, " orderReference: ", orderReference)
+		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order orderReference %s could not be confirmed", orderReference)
 		return
 	}
