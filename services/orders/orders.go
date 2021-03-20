@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/arxdsilva/golang-ifood-sdk/services/merchant"
 	"github.com/kpango/glg"
@@ -21,6 +22,30 @@ const (
 var (
 	ErrOrderReferenceNotSpecified = errors.New("Order reference not specified")
 	ErrCancelCodeNotSpecified     = errors.New("Order cancel code not specified")
+	cancelCodes                   = map[string]string{
+		"501": "PROBLEMAS DE SISTEMA",
+		"502": "PEDIDO EM DUPLICIDADE",
+		"503": "ITEM INDISPONÍVEL",
+		"504": "RESTAURANTE SEM MOTOBOY",
+		"505": "CARDÁPIO DESATUALIZADO",
+		"506": "PEDIDO FORA DA ÁREA DE ENTREGA",
+		"507": "CLIENTE GOLPISTA / TROTE",
+		"508": "FORA DO HORÁRIO DO DELIVERY",
+		"509": "DIFICULDADES INTERNAS DO RESTAURANTE",
+		"511": "ÁREA DE RISCO",
+		"512": "RESTAURANTE ABRIRÁ MAIS TARDE",
+		"513": "RESTAURANTE FECHOU MAIS CEDO",
+		"803": "ITEM INDISPONÍVEL",
+		"805": "RESTAURANTE SEM MOTOBOY",
+		"801": "PROBLEMAS DE SISTEMA",
+		"804": "CADASTRO DO CLIENTE INCOMPLETO - CLIENTE NÃO ATENDE",
+		"807": "PEDIDO FORA DA ÁREA DE ENTREGA",
+		"808": "CLIENTE GOLPISTA / TROTE",
+		"809": "FORA DO HORÁRIO DO DELIVERY",
+		"815": "DIFICULDADES INTERNAS DO RESTAURANTE",
+		"818": "TAXA DE ENTREGA INCONSISTENTE",
+		"820": "ÁREA DE RISCO",
+	}
 )
 
 type (
@@ -30,6 +55,7 @@ type (
 		SetConfirmStatus(reference string) error
 		SetDispatchStatus(reference string) error
 		SetReadyToDeliverStatus(reference string) error
+		SetCancelStatus(reference, code string) error
 	}
 
 	OrderDetails struct {
@@ -108,6 +134,11 @@ type (
 		Discount     string `json:"discount"`
 		Addition     string `json:"addition"`
 		Externalcode string `json:"externalCode"`
+	}
+
+	cancelOrder struct {
+		Code    string `json:"cancellationCode"`
+		Details string `json:"details"`
 	}
 
 	ordersService struct {
@@ -255,6 +286,59 @@ func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err erro
 		glg.Error("[SDK] Orders SetReadyToDeliverStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
 		glg.Error("[SDK] Orders SetReadyToDeliverStatus err: ", err)
+		return
+	}
+	return
+}
+
+func (o *ordersService) SetCancelStatus(orderReference, code string) (err error) {
+	if err = verifyCancel(orderReference, code); err != nil {
+		glg.Error("[SDK] Orders SetCancelStatus verifyCancel: ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Orders SetCancelStatus auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/statuses/cancellationRequested", V3Endpoint, orderReference)
+	detail := cancelCodes[code]
+	co := cancelOrder{Code: code, Details: detail}
+	reader, err := httpadapter.NewJsonReader(co)
+	if err != nil {
+		glg.Error("[SDK] Orders SetCancelStatus NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, reader, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders SetCancelStatus adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders SetCancelStatus status code: ", status, " orderReference: ", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
+		glg.Error("[SDK] Orders SetCancelStatus err: ", err)
+		return
+	}
+	return
+}
+
+func verifyCancel(reference, code string) (err error) {
+	if reference == "" {
+		err = ErrOrderReferenceNotSpecified
+		return
+	}
+	if code == "" {
+		err = ErrCancelCodeNotSpecified
+		return
+	}
+	_, ok := cancelCodes[code]
+	if !ok {
+		err = fmt.Errorf(
+			"cancel code '%s' is invalid, verify docs: https://developer.ifood.com.br/reference#pedido-de-cancelamento-30",
+			code)
 		return
 	}
 	return
