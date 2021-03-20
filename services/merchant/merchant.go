@@ -22,6 +22,7 @@ type (
 		ListAll() ([]Merchant, error)
 		Unavailabilities(merchantUUID string) (Unavailabilities, error)
 		CreateUnavailabily(merchantUUID, description string, pauseMinutes int32) (UnavailabilityResponse, error)
+		DeleteUnavailabily(merchantUUID, unavailabilityID string) error
 	}
 
 	Merchant struct {
@@ -149,4 +150,27 @@ func (m *merchantService) CreateUnavailabily(merchantUUID, description string, p
 		return
 	}
 	return ur, json.Unmarshal(resp, &ur)
+}
+
+// DeleteUnavailabily remove indisponibilidade no merchant
+func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID string) (err error) {
+	if err = m.auth.Validate(); err != nil {
+		glg.Error("[SDK] Merchant DeleteUnavailabily auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/unavailabilities/%s", V1Endpoint, merchantUUID, unavailabilityID)
+	_, status, err := m.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Merchant DeleteUnavailabily adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Merchant DeleteUnavailabily status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not delete unavailability id '%s' ", merchantUUID, unavailabilityID)
+		glg.Error("[SDK] Merchant DeleteUnavailabily err: ", err)
+		return
+	}
+	return
 }
