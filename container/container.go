@@ -11,6 +11,7 @@ import (
 	"github.com/arxdsilva/golang-ifood-sdk/services/catalog"
 	"github.com/arxdsilva/golang-ifood-sdk/services/events"
 	"github.com/arxdsilva/golang-ifood-sdk/services/merchant"
+	"github.com/arxdsilva/golang-ifood-sdk/services/orders"
 	"github.com/kpango/glg"
 )
 
@@ -22,6 +23,7 @@ type Container struct {
 	MerchantService merchant.Service
 	CatalogService  catalog.Service
 	EventsService   events.Service
+	OrdersService   orders.Service
 }
 
 func New(env int, timeout time.Duration) *Container {
@@ -45,6 +47,8 @@ func (c *Container) GetHttpAdapter() adapters.Http {
 	}
 	return c.httpadapter
 }
+
+// Do a start method to instantiate all services instead of each separated
 
 func (c *Container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
 	if c.httpadapter == nil {
@@ -100,4 +104,19 @@ func (c *Container) GetEventsService() events.Service {
 		c.EventsService = events.New(c.GetHttpAdapter(), c.AuthService)
 	}
 	return c.EventsService
+}
+
+func (c *Container) GetOrdersService() orders.Service {
+	if c.httpadapter == nil {
+		glg.Warn("[GetOrdersService]: http adapter is nil, please set it with Container.GetHttpAdapter")
+		return nil
+	}
+	if c.AuthService == nil {
+		glg.Warn("[GetOrdersService]: please set the authentication service")
+		return nil
+	}
+	if c.OrdersService == nil {
+		c.OrdersService = orders.New(c.GetHttpAdapter(), c.AuthService)
+	}
+	return c.OrdersService
 }
