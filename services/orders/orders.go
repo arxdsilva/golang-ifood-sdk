@@ -114,7 +114,7 @@ func New(adapter adapters.Http, authService auth.Service) *ordersService {
 func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err error) {
 	err = o.auth.Validate()
 	if err != nil {
-		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
+		glg.Error("[SDK] Orders GetDetails auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -136,7 +136,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	err = o.auth.Validate()
 	if err != nil {
-		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
+		glg.Error("[SDK] Orders SetIntegrateStatus auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -158,7 +158,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	err = o.auth.Validate()
 	if err != nil {
-		glg.Error("[SDK] Orders auth.Validate: ", err.Error())
+		glg.Error("[SDK] Orders SetConfirmStatus auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
