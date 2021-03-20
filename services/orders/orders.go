@@ -2,7 +2,6 @@ package orders
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -16,9 +15,6 @@ const (
 	V1Endpoint = "/v1.0/orders"
 	V3Endpoint = "/v3.0/orders"
 )
-
-var ErrUnauthorized = errors.New("Unauthorized request")
-var ErrBadRequest = errors.New("Bad request")
 
 type (
 	Service interface {
@@ -131,7 +127,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 	}
 	if status != http.StatusOK {
 		glg.Warn("[SDK] Orders GetDetails status code: ", status)
-		err = ErrBadRequest
+		err = fmt.Errorf("Order reference %s could not retrieve details", orderReference)
 		return
 	}
 	return od, json.Unmarshal(resp, &od)
@@ -153,7 +149,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	}
 	if status != http.StatusOK {
 		glg.Error("[SDK] Orders SetIntegrateStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order orderReference %s could not be integrated", orderReference)
+		err = fmt.Errorf("Order reference %s could not be integrated", orderReference)
 		return
 	}
 	return
@@ -175,7 +171,7 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	}
 	if status != http.StatusOK {
 		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order orderReference %s could not be confirmed", orderReference)
+		err = fmt.Errorf("Order reference %s could not be confirmed", orderReference)
 		return
 	}
 	return
