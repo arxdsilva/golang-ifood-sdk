@@ -15,6 +15,7 @@ import (
 
 const (
 	V1Endpoint = "/v1.0/merchants"
+	V2Endpoint = "/v2.0/merchants"
 )
 
 type (
@@ -23,6 +24,7 @@ type (
 		Unavailabilities(merchantUUID string) (Unavailabilities, error)
 		CreateUnavailabily(merchantUUID, description string, pauseMinutes int32) (UnavailabilityResponse, error)
 		DeleteUnavailabily(merchantUUID, unavailabilityID string) error
+		Availabily(merchantUUID string) (AvailabilityResponse, error)
 	}
 
 	Merchant struct {
@@ -66,6 +68,35 @@ type (
 		Authorid    string    `json:"authorId"`
 		Start       time.Time `json:"start"`
 		End         time.Time `json:"end"`
+	}
+
+	AvailabilityResponse []Availability
+	Availability         struct {
+		Context    string `json:"context"`
+		Available  bool   `json:"available"`
+		State      string `json:"state"`
+		Reopenable struct {
+			// Identifier interface{} `json:"identifier"`
+			// Type       interface{} `json:"type"`
+			Reopenable bool `json:"reopenable"`
+		} `json:"reopenable"`
+		Validations []struct {
+			ID      string `json:"id"`
+			Code    string `json:"code"`
+			State   string `json:"state"`
+			Message struct {
+				Title       string `json:"title"`
+				Subtitle    string `json:"subtitle"`
+				Description string `json:"description"`
+				Priority    int    `json:"priority"`
+			} `json:"message"`
+		} `json:"validations"`
+		Message struct {
+			Title       string `json:"title"`
+			Subtitle    string `json:"subtitle"`
+			Description string `json:"description"`
+			Priority    int    `json:"priority"`
+		} `json:"message"`
 	}
 
 	merchantService struct {
@@ -173,4 +204,27 @@ func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID stri
 		return
 	}
 	return
+}
+
+// Availabily recebe o status de disponibilidade de um merchant
+func (m *merchantService) Availabily(merchantUUID string) (ar AvailabilityResponse, err error) {
+	if err = m.auth.Validate(); err != nil {
+		glg.Error("[SDK] Merchant Availabily auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/availabilities", V2Endpoint, merchantUUID)
+	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Merchant Availabily adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Merchant Availabily status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not get availability", merchantUUID)
+		glg.Error("[SDK] Merchant Availabily err: ", err)
+		return
+	}
+	return ar, json.Unmarshal(resp, &ar)
 }
