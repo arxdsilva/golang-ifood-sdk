@@ -18,7 +18,10 @@ const (
 	V3Endpoint = "/v3.0/orders"
 )
 
-var ErrOrderReferenceNotSpecified = errors.New("Order reference not specified")
+var (
+	ErrOrderReferenceNotSpecified = errors.New("Order reference not specified")
+	ErrCancelCodeNotSpecified     = errors.New("Order cancel code not specified")
+)
 
 type (
 	Service interface {
@@ -120,6 +123,7 @@ func New(adapter adapters.Http, authService auth.Service) *ordersService {
 func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders GetDetails: ", err.Error())
 		return
 	}
 	err = o.auth.Validate()
@@ -147,6 +151,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders SetIntegrateStatus: ", err.Error())
 		return
 	}
 	err = o.auth.Validate()
@@ -174,6 +179,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders SetConfirmStatus: ", err.Error())
 		return
 	}
 	err = o.auth.Validate()
@@ -201,6 +207,7 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders SetDispatchStatus: ", err.Error())
 		return
 	}
 	err = o.auth.Validate()
@@ -228,6 +235,7 @@ func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders SetReadyToDeliverStatus: ", err.Error())
 		return
 	}
 	err = o.auth.Validate()
