@@ -18,6 +18,8 @@ const (
 	V2Endpoint = "/v2.0/merchants"
 )
 
+var ErrMerchantNotSpecified = errors.New("merchant not specified")
+
 type (
 	Service interface {
 		ListAll() ([]Merchant, error)
@@ -133,6 +135,11 @@ func (m *merchantService) ListAll() (ml []Merchant, err error) {
 
 // Unavailabilities lista indisponibilidades do merchant
 func (m *merchantService) Unavailabilities(merchantUUID string) (mu Unavailabilities, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Merchant Unavailabilities: ", err.Error())
+		return
+	}
 	if err = m.auth.Validate(); err != nil {
 		glg.Error("[SDK] Merchant Unavailabilities auth.Validate: ", err.Error())
 		return
@@ -156,6 +163,12 @@ func (m *merchantService) Unavailabilities(merchantUUID string) (mu Unavailabili
 
 // CreateUnavailabily cadastra indisponibilidade no merchant
 func (m *merchantService) CreateUnavailabily(merchantUUID, description string, pauseMinutes int32) (ur UnavailabilityResponse, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Merchant CreateUnavailabily: ", err.Error())
+		return
+	}
+
 	if err = m.auth.Validate(); err != nil {
 		glg.Error("[SDK] Merchant CreateUnavailabily auth.Validate: ", err.Error())
 		return
@@ -185,6 +198,11 @@ func (m *merchantService) CreateUnavailabily(merchantUUID, description string, p
 
 // DeleteUnavailabily remove indisponibilidade no merchant
 func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID string) (err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Merchant DeleteUnavailabily: ", err.Error())
+		return
+	}
 	if err = m.auth.Validate(); err != nil {
 		glg.Error("[SDK] Merchant DeleteUnavailabily auth.Validate: ", err.Error())
 		return
@@ -208,6 +226,11 @@ func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID stri
 
 // Availabily recebe o status de disponibilidade de um merchant
 func (m *merchantService) Availabily(merchantUUID string) (ar AvailabilityResponse, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Merchant Availabily: ", err.Error())
+		return
+	}
 	if err = m.auth.Validate(); err != nil {
 		glg.Error("[SDK] Merchant Availabily auth.Validate: ", err.Error())
 		return
