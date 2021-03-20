@@ -14,21 +14,21 @@ import (
 	"github.com/kpango/glg"
 )
 
-type container struct {
+type Container struct {
 	env             int
 	timeout         time.Duration
 	httpadapter     adapters.Http
-	authService     authentication.Service
-	merchantService merchant.Service
-	catalogService  catalog.Service
-	eventsService   events.Service
+	AuthService     authentication.Service
+	MerchantService merchant.Service
+	CatalogService  catalog.Service
+	EventsService   events.Service
 }
 
-func New(env int, timeout time.Duration) *container {
-	return &container{env: env, timeout: timeout}
+func New(env int, timeout time.Duration) *Container {
+	return &Container{env: env, timeout: timeout}
 }
 
-func (c *container) GetHttpAdapter() adapters.Http {
+func (c *Container) GetHttpAdapter() adapters.Http {
 	if c.httpadapter != nil {
 		return c.httpadapter
 	}
@@ -46,58 +46,58 @@ func (c *container) GetHttpAdapter() adapters.Http {
 	return c.httpadapter
 }
 
-func (c *container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
+func (c *Container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with Container.GetHttpAdapter")
 		return nil
 	}
-	if c.authService == nil {
-		c.authService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret)
+	if c.AuthService == nil {
+		c.AuthService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret)
 	}
-	return c.authService
+	return c.AuthService
 }
 
-func (c *container) GetMerchantService() merchant.Service {
+func (c *Container) GetMerchantService() merchant.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetMerchantService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetMerchantService]: http adapter is nil, please set it with Container.GetHttpAdapter")
 		return nil
 	}
-	if c.authService == nil {
+	if c.AuthService == nil {
 		glg.Warn("[GetMerchantService]: please set the authentication service")
 		return nil
 	}
-	if c.merchantService == nil {
-		c.merchantService = merchant.New(c.GetHttpAdapter(), c.authService)
+	if c.MerchantService == nil {
+		c.MerchantService = merchant.New(c.GetHttpAdapter(), c.AuthService)
 	}
-	return c.merchantService
+	return c.MerchantService
 }
 
-func (c *container) GetCatalogService() catalog.Service {
+func (c *Container) GetCatalogService() catalog.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetCatalogService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetCatalogService]: http adapter is nil, please set it with Container.GetHttpAdapter")
 		return nil
 	}
-	if c.authService == nil {
+	if c.AuthService == nil {
 		glg.Warn("[GetCatalogService]: please set the authentication service")
 		return nil
 	}
-	if c.catalogService == nil {
-		c.catalogService = catalog.New(c.GetHttpAdapter(), c.authService)
+	if c.CatalogService == nil {
+		c.CatalogService = catalog.New(c.GetHttpAdapter(), c.AuthService)
 	}
-	return c.catalogService
+	return c.CatalogService
 }
 
-func (c *container) GetEventsService() events.Service {
+func (c *Container) GetEventsService() events.Service {
 	if c.httpadapter == nil {
-		glg.Warn("[GetEventsService]: http adapter is nil, please set it with container.GetHttpAdapter")
+		glg.Warn("[GetEventsService]: http adapter is nil, please set it with Container.GetHttpAdapter")
 		return nil
 	}
-	if c.authService == nil {
+	if c.AuthService == nil {
 		glg.Warn("[GetEventsService]: please set the authentication service")
 		return nil
 	}
-	if c.eventsService == nil {
-		c.eventsService = events.New(c.GetHttpAdapter(), c.authService)
+	if c.EventsService == nil {
+		c.EventsService = events.New(c.GetHttpAdapter(), c.AuthService)
 	}
-	return c.eventsService
+	return c.EventsService
 }
