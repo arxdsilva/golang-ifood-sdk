@@ -332,16 +332,13 @@ func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, t
 
 func verifyCategoryItems(merchantID, catalogID, categoryID string) (err error) {
 	if merchantID == "" {
-		err = ErrMerchantNotSpecified
-		return
+		return ErrMerchantNotSpecified
 	}
 	if catalogID == "" {
-		err = ErrCatalogNotSpecified
-		return
+		return ErrCatalogNotSpecified
 	}
 	if categoryID == "" {
-		err = ErrCategoryNotSpecified
-		return
+		return ErrCategoryNotSpecified
 	}
 	return
 }
