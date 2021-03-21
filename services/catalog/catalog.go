@@ -333,8 +333,7 @@ func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, t
 		return
 	}
 	if catalogID == "" {
-		err = errors.New("Catalog ID was not specified")
-		return
+		return ErrCatalogNotSpecified
 	}
 	if len(name) > 100 {
 		err = errors.New("Category name needs to have less than 100 characters")
