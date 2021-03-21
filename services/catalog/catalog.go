@@ -21,6 +21,7 @@ type (
 	Service interface {
 		ListAll(merchantID string) (Catalogs, error)
 		ListUnsellableItems(merchantUUID, catalogID string) (UnsellableResponse, error)
+		ListAllCategoriesInCatalog(merchantUUID, catalogID string) (CategoryResponse, error)
 	}
 
 	catalogService struct {
@@ -49,7 +50,7 @@ func (c *catalogService) ListAll(merchantUUID string) (ct Catalogs, err error) {
 	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/catalogs", merchantUUID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] Catalog ListAll adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
@@ -89,7 +90,7 @@ func (c *catalogService) ListUnsellableItems(merchantUUID, catalogID string) (ur
 		"/merchants/%s/catalogs/%s/unsellable-items", merchantUUID, catalogID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] Catalog ListUnsellableItems adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
@@ -101,4 +102,40 @@ func (c *catalogService) ListUnsellableItems(merchantUUID, catalogID string) (ur
 		return
 	}
 	return ur, json.Unmarshal(resp, &ur)
+}
+
+func (c *catalogService) ListAllCategoriesInCatalog(merchantUUID, catalogID string) (cr CategoryResponse, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog: ", err.Error())
+		return
+	}
+	if catalogID == "" {
+		err = errors.New("Catalog ID was not specified")
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/catalogs/%s/categories", merchantUUID, catalogID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not list categories in catalog '%s'",
+			merchantUUID, catalogID)
+		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog err: ", err)
+		return
+	}
+	return cr, json.Unmarshal(resp, &cr)
 }
