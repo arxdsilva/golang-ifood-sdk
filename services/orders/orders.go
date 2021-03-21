@@ -53,6 +53,7 @@ type (
 		SetReadyToDeliverStatus(reference string) error
 		SetCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
+		Tracking(orderUUID string) (TrackingResponse, error)
 	}
 
 	ordersService struct {
@@ -248,11 +249,11 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 func (o *ordersService) ClientCancellationStatus(orderReference string, accepted bool) (err error) {
 	if orderReference == "" {
 		err = ErrOrderReferenceNotSpecified
-		glg.Error("[SDK] Orders SetReadyToDeliverStatus: ", err.Error())
+		glg.Error("[SDK] Orders ClientCancellationStatus: ", err.Error())
 		return
 	}
 	if err = o.auth.Validate(); err != nil {
-		glg.Error("[SDK] Orders AcceptCancelStatus auth.Validate: ", err.Error())
+		glg.Error("[SDK] Orders ClientCancellationStatus auth.Validate: ", err.Error())
 		return
 	}
 	cancelStatus := "consumerCancellationDenied"
@@ -264,16 +265,43 @@ func (o *ordersService) ClientCancellationStatus(orderReference string, accepted
 	endpoint := fmt.Sprintf("%s/%s/statuses/%s", V2Endpoint, orderReference, cancelStatus)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Orders AcceptCancelStatus adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Orders ClientCancellationStatus adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusAccepted {
-		glg.Error("[SDK] Orders AcceptCancelStatus status code: ", status, " orderReference: ", orderReference)
+		glg.Error("[SDK] Orders ClientCancellationStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
-		glg.Error("[SDK] Orders AcceptCancelStatus err: ", err)
+		glg.Error("[SDK] Orders ClientCancellationStatus err: ", err)
 		return
 	}
 	return
+}
+
+func (o *ordersService) Tracking(orderUUID string) (tr TrackingResponse, err error) {
+	if orderUUID == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders Tracking: ", orderUUID, " err: ", err.Error())
+		return
+	}
+	if err = o.auth.Validate(); err != nil {
+		glg.Error("[SDK] Orders Tracking auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/tracking", V2Endpoint, orderUUID)
+	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders Tracking adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders Tracking status code: ", status, " order uuid: ", orderUUID)
+		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderUUID)
+		glg.Error("[SDK] Orders Tracking err: ", err)
+		return
+	}
+	return tr, json.Unmarshal(resp, &tr)
 }
 
 func verifyCancel(reference, code string) (err error) {

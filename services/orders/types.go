@@ -1,6 +1,10 @@
 package orders
 
-import "github.com/arxdsilva/golang-ifood-sdk/services/merchant"
+import (
+	"time"
+
+	"github.com/arxdsilva/golang-ifood-sdk/services/merchant"
+)
 
 type (
 	OrderDetails struct {
@@ -79,6 +83,18 @@ type (
 		Discount     string `json:"discount"`
 		Addition     string `json:"addition"`
 		Externalcode string `json:"externalCode"`
+	}
+
+	TrackingResponse struct {
+		Date             interface{} `json:"date"`
+		DeliveryTime     time.Time   `json:"deliveryTime"`
+		Eta              int         `json:"eta"`
+		EtaToDestination int         `json:"etaToDestination"`
+		EtaToOrigin      int         `json:"etaToOrigin"`
+		Latitude         float64     `json:"latitude"`
+		Longitude        float64     `json:"longitude"`
+		OrderID          string      `json:"orderId"`
+		TrackDate        time.Time   `json:"trackDate"`
 	}
 
 	cancelOrder struct {
