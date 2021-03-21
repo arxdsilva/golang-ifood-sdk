@@ -96,7 +96,19 @@ type (
 		OrderID          string      `json:"orderId"`
 		TrackDate        time.Time   `json:"trackDate"`
 	}
-
+	DeliveryInformationResponse struct {
+		ExternalID         string      `json:"externalId"`
+		OrderStatus        string      `json:"orderStatus"`
+		WorkerName         string      `json:"workerName"`
+		WorkerPhone        string      `json:"workerPhone"`
+		WorkerPhoto        string      `json:"workerPhoto"`
+		VehicleType        string      `json:"vehicleType"`
+		VehiclePlateNumber interface{} `json:"vehiclePlateNumber"`
+		LogisticCompany    string      `json:"logisticCompany"`
+		Latitude           float64     `json:"latitude"`
+		Longitude          float64     `json:"longitude"`
+		Eta                int         `json:"eta"`
+	}
 	cancelOrder struct {
 		Code    string `json:"cancellationCode"`
 		Details string `json:"details"`

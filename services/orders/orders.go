@@ -54,6 +54,7 @@ type (
 		SetCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
 		Tracking(orderUUID string) (TrackingResponse, error)
+		DeliveryInformation(orderUUID string) (DeliveryInformationResponse, error)
 	}
 
 	ordersService struct {
@@ -233,7 +234,9 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders SetCancelStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
+		err = fmt.Errorf(
+			"Order reference '%s' could not be set as 'cancelled' code '%s', detail '%s'",
+			orderReference, code, detail)
 		glg.Error("[SDK] Orders SetCancelStatus err: ", err)
 		return
 	}
@@ -270,13 +273,16 @@ func (o *ordersService) ClientCancellationStatus(orderReference string, accepted
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders ClientCancellationStatus status code: ", status, " orderReference: ", orderReference)
-		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderReference)
+		err = fmt.Errorf(
+			"Order reference '%s' could not set 'client cancellation' status '%s'",
+			orderReference, cancelStatus)
 		glg.Error("[SDK] Orders ClientCancellationStatus err: ", err)
 		return
 	}
 	return
 }
 
+// Tracking retorna a posicao do entregador
 func (o *ordersService) Tracking(orderUUID string) (tr TrackingResponse, err error) {
 	if orderUUID == "" {
 		err = ErrOrderReferenceNotSpecified
@@ -297,11 +303,39 @@ func (o *ordersService) Tracking(orderUUID string) (tr TrackingResponse, err err
 	}
 	if status != http.StatusAccepted {
 		glg.Error("[SDK] Orders Tracking status code: ", status, " order uuid: ", orderUUID)
-		err = fmt.Errorf("Order reference '%s' could not be set as 'ready to deliver'", orderUUID)
+		err = fmt.Errorf("Order reference '%s' could not get tracking information", orderUUID)
 		glg.Error("[SDK] Orders Tracking err: ", err)
 		return
 	}
 	return tr, json.Unmarshal(resp, &tr)
+}
+
+// DeliveryInformation retorna informacoes da entrega
+func (o *ordersService) DeliveryInformation(orderUUID string) (di DeliveryInformationResponse, err error) {
+	if orderUUID == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders DeliveryInformation: ", orderUUID, " err: ", err.Error())
+		return
+	}
+	if err = o.auth.Validate(); err != nil {
+		glg.Error("[SDK] Orders DeliveryInformation auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s/%s/delivery-information", V2Endpoint, orderUUID)
+	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders DeliveryInformation adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		glg.Error("[SDK] Orders DeliveryInformation status code: ", status, " order uuid: ", orderUUID)
+		err = fmt.Errorf("Order uuid '%s' could get delivery information", orderUUID)
+		glg.Error("[SDK] Orders DeliveryInformation err: ", err)
+		return
+	}
+	return di, json.Unmarshal(resp, &di)
 }
 
 func verifyCancel(reference, code string) (err error) {
