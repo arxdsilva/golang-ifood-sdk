@@ -16,7 +16,11 @@ const (
 	V2Endpoint = "/catalog/v2.0"
 )
 
-var ErrMerchantNotSpecified = errors.New("merchant not specified")
+var (
+	ErrMerchantNotSpecified = errors.New("merchant not specified")
+	ErrCatalogNotSpecified  = errors.New("Catalog ID was not specified")
+	ErrCategoryNotSpecified = errors.New("Category ID was not specified")
+)
 
 type (
 	Service interface {
@@ -26,6 +30,7 @@ type (
 		CreateCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template, externalCode string) (CategoryCreateResponse, error)
 		GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (CategoryResponse, error)
 		EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (CategoryCreateResponse, error)
+		DeleteCategoryInCatalog(merchantUUID, catalogID, categoryID string) error
 	}
 
 	catalogService struct {
@@ -188,19 +193,8 @@ func (c *catalogService) CreateCategoryInCatalog(merchantUUID, catalogID, name, 
 
 // GetCategoryInCatalog lists a category in a specified catalog
 func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (cr CategoryResponse, err error) {
-	if merchantUUID == "" {
-		err = ErrMerchantNotSpecified
-		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
-		return
-	}
-	if catalogID == "" {
-		err = errors.New("Catalog ID was not specified")
-		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
-		return
-	}
-	if categoryID == "" {
-		err = errors.New("Category ID was not specified")
-		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
+	if err = verifyCategoryItems(merchantUUID, catalogID, categoryID); err != nil {
+		glg.Error("[SDK] Catalog GetCategoryInCatalog verifyCategoryItems: ", err.Error())
 		return
 	}
 	err = c.auth.Validate()
@@ -273,6 +267,37 @@ func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, category
 	return cr, json.Unmarshal(resp, &cr)
 }
 
+// DeleteCategoryInCatalog removes a category in a specified catalog
+func (c *catalogService) DeleteCategoryInCatalog(merchantUUID, catalogID, categoryID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, catalogID, categoryID); err != nil {
+		glg.Error("[SDK] Catalog DeleteCategoryInCatalog verifyCategoryItems: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteCategoryInCatalog auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, categoryID)
+	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteCategoryInCatalog adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog DeleteCategoryInCatalog status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not delete category '%s' in catalog '%s'",
+			merchantUUID, catalogID, catalogID)
+		glg.Error("[SDK] Catalog DeleteCategoryInCatalog err: ", err)
+		return
+	}
+	return
+}
+
 func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template string) (err error) {
 	if merchantUUID == "" {
 		err = ErrMerchantNotSpecified
@@ -300,6 +325,22 @@ func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, t
 		err = fmt.Errorf(
 			"Category template on catalog '%s' should be 'DEFAULT' or 'PIZZA' and is '%s'",
 			catalogID, template)
+		return
+	}
+	return
+}
+
+func verifyCategoryItems(merchantID, catalogID, categoryID string) (err error) {
+	if merchantID == "" {
+		err = ErrMerchantNotSpecified
+		return
+	}
+	if catalogID == "" {
+		err = ErrCatalogNotSpecified
+		return
+	}
+	if categoryID == "" {
+		err = ErrCategoryNotSpecified
 		return
 	}
 	return
