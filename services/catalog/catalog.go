@@ -24,6 +24,7 @@ type (
 		ListUnsellableItems(merchantUUID, catalogID string) (UnsellableResponse, error)
 		ListAllCategoriesInCatalog(merchantUUID, catalogID string) (CategoryResponse, error)
 		CreateCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template, externalCode string) (CategoryCreateResponse, error)
+		GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (CategoryResponse, error)
 	}
 
 	catalogService struct {
@@ -175,6 +176,48 @@ func (c *catalogService) CreateCategoryInCatalog(merchantUUID, catalogID, name, 
 			"Merchant '%s' could not create category in catalog '%s'",
 			merchantUUID, catalogID)
 		glg.Error("[SDK] Catalog CreateCategoryInCatalog err: ", err)
+		return
+	}
+	return cr, json.Unmarshal(resp, &cr)
+}
+
+// GetCategoryInCatalog lists a category in a specified catalog
+func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (cr CategoryResponse, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
+		return
+	}
+	if catalogID == "" {
+		err = errors.New("Catalog ID was not specified")
+		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
+		return
+	}
+	if categoryID == "" {
+		err = errors.New("Category ID was not specified")
+		glg.Error("[SDK] Catalog GetCategoryInCatalog: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog GetCategoryInCatalog auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, catalogID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog GetCategoryInCatalog adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Catalog GetCategoryInCatalog status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not get category '%s' in catalog '%s'",
+			merchantUUID, categoryID, catalogID)
+		glg.Error("[SDK] Catalog GetCategoryInCatalog err: ", err)
 		return
 	}
 	return cr, json.Unmarshal(resp, &cr)
