@@ -134,19 +134,6 @@ type (
 		OriginalValue int `json:"originalValue"`
 	}
 
-	Products []Product
-	Product  struct {
-		ID                  string   `json:"id"`
-		Name                string   `json:"name"`
-		Description         string   `json:"description"`
-		ExternalCode        string   `json:"externalCode"`
-		Image               string   `json:"image"`
-		Shifts              []Shift  `json:"shifts"`
-		Serving             string   `json:"serving"`
-		DietaryRestrictions []string `json:"dietaryRestrictions"`
-		Ean                 string   `json:"ean"`
-	}
-
 	Shift struct {
 		StartTime string `json:"startTime"`
 		EndTime   string `json:"endTime"`
