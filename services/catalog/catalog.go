@@ -34,6 +34,7 @@ type (
 		ListProducts(merchantUUID string) (Products, error)
 		CreateProduct(merchantUUID string, product Product) (Product, error)
 		EditProduct(merchantUUID, productID string, product Product) (Product, error)
+		DeleteProduct(merchantUUID, productID string) error
 	}
 
 	catalogService struct {
@@ -426,6 +427,41 @@ func (c *catalogService) EditProduct(merchantUUID, productID string, product Pro
 		return
 	}
 	glg.Infof("[SDK] Catalog EditProduct id '%s' success", productID)
+	return
+}
+
+// DeleteProduct in a merchant
+func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct verifyCategoryItems: ", err.Error())
+		return
+	}
+	if productID == "" {
+		err = errors.New("productID not specified")
+		glg.Error("[SDK] Catalog DeleteProduct err: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
+		merchantUUID, productID)
+	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog DeleteProduct status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create product", merchantUUID)
+		glg.Error("[SDK] Catalog DeleteProduct err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog DeleteProduct id '%s' success", productID)
 	return
 }
 
