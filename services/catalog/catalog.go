@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	catalogV2Endpoint = "/catalog/v2.0"
-	listAllEndpoint   = "/merchants/%s/catalogs"
+	V2Endpoint = "/catalog/v2.0"
 )
 
-var ErrBadRequest = errors.New("Bad request")
+var ErrMerchantNotSpecified = errors.New("merchant not specified")
 
 type (
 	Service interface {
 		ListAll(merchantID string) (Catalogs, error)
+		ListUnsellableItems(merchantUUID, catalogID string) (UnsellableResponse, error)
 	}
 
 	catalogService struct {
@@ -35,30 +35,101 @@ type (
 		Status     string   `json:"status"`
 		ModifiedAt float64  `json:"modifiedAt"`
 	}
+
+	UnsellableResponse struct {
+		Categories []Category `json:"categories"`
+	}
+	Category struct {
+		ID                   string               `json:"id"`
+		Status               string               `json:"status"`
+		Template             string               `json:"template"`
+		Restrictions         []string             `json:"restrictions"`
+		UnsellableItems      []UnsellableItem     `json:"unsellableItems"`
+		UnsellablePizzaItems UnsellablePizzaItems `json:"unsellablePizzaItems"`
+	}
+	UnsellableItem struct {
+		ID           string   `json:"id"`
+		ProductID    string   `json:"productId"`
+		Restrictions []string `json:"restrictions"`
+	}
+	UnsellablePizzaItems struct {
+		Toppings []UnsellableItem `json:"toppings"`
+		Crusts   []UnsellableItem `json:"crusts"`
+		Edges    []UnsellableItem `json:"edges"`
+		Sizes    []UnsellableItem `json:"sizes"`
+	}
 )
 
 func New(adapter adapters.Http, authService auth.Service) *catalogService {
 	return &catalogService{adapter, authService}
 }
 
-func (c *catalogService) ListAll(merchantID string) (ct Catalogs, err error) {
+func (c *catalogService) ListAll(merchantUUID string) (ct Catalogs, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Catalog ListAll: ", err.Error())
+		return
+	}
 	err = c.auth.Validate()
 	if err != nil {
-		glg.Error("[SDK] Catalog auth.Validate: ", err.Error())
+		glg.Error("[SDK] Catalog ListAll auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := catalogV2Endpoint + fmt.Sprintf(listAllEndpoint, merchantID)
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/catalogs", merchantUUID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] Catalog ListAll status code: ", status)
-		err = ErrBadRequest
+		glg.Error("[SDK] Catalog ListAll status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not list catalogs", merchantUUID)
+		glg.Error("[SDK] Catalog ListAll err: ", err)
 		return
 	}
 	return ct, json.Unmarshal(resp, &ct)
+}
+
+// ListChangelogs not implemented
+func (c *catalogService) ListChangelogs(merchantUUID string) (ct Catalogs, err error) {
+	return
+}
+
+// ListUnsellableItems returns all blocked sellable items and why
+func (c *catalogService) ListUnsellableItems(merchantUUID, catalogID string) (ur UnsellableResponse, err error) {
+	if merchantUUID == "" {
+		err = ErrMerchantNotSpecified
+		glg.Error("[SDK] Catalog ListUnsellableItems: ", err.Error())
+		return
+	}
+	if catalogID == "" {
+		err = errors.New("catalog ID not specified")
+		glg.Error("[SDK] Catalog ListUnsellableItems: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog ListUnsellableItems auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/catalogs/%s/unsellable-items", merchantUUID, catalogID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Catalog ListUnsellableItems status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not list unsellable items, catalog: '%s'",
+			merchantUUID, catalogID)
+		glg.Error("[SDK] Catalog ListUnsellableItems err: ", err)
+		return
+	}
+	return ur, json.Unmarshal(resp, &ur)
 }
