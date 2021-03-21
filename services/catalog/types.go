@@ -39,29 +39,16 @@ type (
 		ExternalCode string `json:"externalCode"`
 		Status       string `json:"status"`
 		Items        []struct {
-			ID           string `json:"id"`
-			Name         string `json:"name"`
-			Description  string `json:"description"`
-			ExternalCode string `json:"externalCode"`
-			Status       string `json:"status"`
-			ProductID    string `json:"productId"`
-			Sequence     int    `json:"sequence"`
-			MagePath     string `json:"magePath"`
-			Price        struct {
-				Value         int `json:"value"`
-				OriginalValue int `json:"originalValue"`
-			} `json:"price"`
-			Shifts []struct {
-				StartTime string `json:"startTime"`
-				EndTime   string `json:"endTime"`
-				Monday    bool   `json:"monday"`
-				Tuesday   bool   `json:"tuesday"`
-				Wednesday bool   `json:"wednesday"`
-				Thursday  bool   `json:"thursday"`
-				Friday    bool   `json:"friday"`
-				Saturday  bool   `json:"saturday"`
-				Sunday    bool   `json:"sunday"`
-			} `json:"shifts"`
+			ID                  string   `json:"id"`
+			Name                string   `json:"name"`
+			Description         string   `json:"description"`
+			ExternalCode        string   `json:"externalCode"`
+			Status              string   `json:"status"`
+			ProductID           string   `json:"productId"`
+			Sequence            int      `json:"sequence"`
+			MagePath            string   `json:"magePath"`
+			Price               Price    `json:"price"`
+			Shifts              []Shift  `json:"shifts"`
 			Serving             string   `json:"serving"`
 			DietaryRestrictions []string `json:"dietaryRestrictions"`
 			Ean                 string   `json:"ean"`
@@ -82,10 +69,7 @@ type (
 					Description  string `json:"description"`
 					ExternalCode string `json:"externalCode"`
 					ImagePath    string `json:"imagePath"`
-					Price        struct {
-						Value         int `json:"value"`
-						OriginalValue int `json:"originalValue"`
-					} `json:"price"`
+					Price        Price  `json:"price"`
 				} `json:"options"`
 			} `json:"optionGroups"`
 			SellingOption struct {
@@ -102,10 +86,7 @@ type (
 				ExternalCode      string `json:"externalCode"`
 				Slices            int    `json:"slices"`
 				AcceptedFractions []int  `json:"acceptedFractions"`
-				Price             struct {
-					Value         int `json:"value"`
-					OriginalValue int `json:"originalValue"`
-				} `json:"price"`
+				Price             Price  `json:"price"`
 			} `json:"sizes"`
 			Crusts   []CategoryItem `json:"crusts"`
 			Edges    []CategoryItem `json:"edges"`
@@ -125,17 +106,7 @@ type (
 					} `json:"additionalProp"`
 				} `json:"prices"`
 			} `json:"toppings"`
-			Shifts []struct {
-				StartTime string `json:"startTime"`
-				EndTime   string `json:"endTime"`
-				Monday    bool   `json:"monday"`
-				Tuesday   bool   `json:"tuesday"`
-				Wednesday bool   `json:"wednesday"`
-				Thursday  bool   `json:"thursday"`
-				Friday    bool   `json:"friday"`
-				Saturday  bool   `json:"saturday"`
-				Sunday    bool   `json:"sunday"`
-			} `json:"shifts"`
+			Shifts []Shift `json:"shifts"`
 		} `json:"pizza"`
 	}
 
@@ -161,5 +132,30 @@ type (
 	Price struct {
 		Value         int `json:"value"`
 		OriginalValue int `json:"originalValue"`
+	}
+
+	Products []Product
+	Product  struct {
+		ID                  string   `json:"id"`
+		Name                string   `json:"name"`
+		Description         string   `json:"description"`
+		ExternalCode        string   `json:"externalCode"`
+		Image               string   `json:"image"`
+		Shifts              []Shift  `json:"shifts"`
+		Serving             string   `json:"serving"`
+		DietaryRestrictions []string `json:"dietaryRestrictions"`
+		Ean                 string   `json:"ean"`
+	}
+
+	Shift struct {
+		StartTime string `json:"startTime"`
+		EndTime   string `json:"endTime"`
+		Monday    bool   `json:"monday"`
+		Tuesday   bool   `json:"tuesday"`
+		Wednesday bool   `json:"wednesday"`
+		Thursday  bool   `json:"thursday"`
+		Friday    bool   `json:"friday"`
+		Saturday  bool   `json:"saturday"`
+		Sunday    bool   `json:"sunday"`
 	}
 )

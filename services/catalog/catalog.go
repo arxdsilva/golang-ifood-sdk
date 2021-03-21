@@ -31,6 +31,7 @@ type (
 		GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (CategoryResponse, error)
 		EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (CategoryCreateResponse, error)
 		DeleteCategoryInCatalog(merchantUUID, catalogID, categoryID string) error
+		ListProducts(merchantUUID string) (Products, error)
 	}
 
 	catalogService struct {
@@ -296,6 +297,34 @@ func (c *catalogService) DeleteCategoryInCatalog(merchantUUID, catalogID, catego
 		return
 	}
 	return
+}
+
+// ListProducts from a merchant
+func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog ListProducts verifyCategoryItems: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog ListProducts auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog ListProducts adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog ListProducts status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not get all products", merchantUUID)
+		glg.Error("[SDK] Catalog ListProducts err: ", err)
+		return
+	}
+	return ps, json.Unmarshal(resp, &ps)
 }
 
 func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template string) (err error) {
