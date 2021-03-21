@@ -107,28 +107,8 @@ type (
 					OriginalValue int `json:"originalValue"`
 				} `json:"price"`
 			} `json:"sizes"`
-			Crusts []struct {
-				ID           string `json:"id"`
-				Name         string `json:"name"`
-				Status       string `json:"status"`
-				ExternalCode string `json:"externalCode"`
-				Sequence     int    `json:"sequence"`
-				Price        struct {
-					Value         int `json:"value"`
-					OriginalValue int `json:"originalValue"`
-				} `json:"price"`
-			} `json:"crusts"`
-			Edges []struct {
-				ID           string `json:"id"`
-				Name         string `json:"name"`
-				Status       string `json:"status"`
-				ExternalCode string `json:"externalCode"`
-				Sequence     int    `json:"sequence"`
-				Price        struct {
-					Value         int `json:"value"`
-					OriginalValue int `json:"originalValue"`
-				} `json:"price"`
-			} `json:"edges"`
+			Crusts   []CategoryItem `json:"crusts"`
+			Edges    []CategoryItem `json:"edges"`
 			Toppings []struct {
 				ID                  string   `json:"id"`
 				ExternalCode        string   `json:"externalCode"`
@@ -157,5 +137,29 @@ type (
 				Sunday    bool   `json:"sunday"`
 			} `json:"shifts"`
 		} `json:"pizza"`
+	}
+
+	CategoryItem struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		Status       string `json:"status"`
+		ExternalCode string `json:"externalCode"`
+		Template     string `json:"template"`
+		Sequence     int    `json:"sequence"`
+		Price        Price  `json:"price"`
+	}
+
+	CategoryCreateResponse struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		ExternalCode string `json:"externalCode"`
+		Status       string `json:"status"`
+		Sequence     int    `json:"sequence"`
+		Template     string `json:"template"`
+	}
+
+	Price struct {
+		Value         int `json:"value"`
+		OriginalValue int `json:"originalValue"`
 	}
 )
