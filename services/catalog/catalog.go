@@ -25,6 +25,7 @@ type (
 		ListAllCategoriesInCatalog(merchantUUID, catalogID string) (CategoryResponse, error)
 		CreateCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template, externalCode string) (CategoryCreateResponse, error)
 		GetCategoryInCatalog(merchantUUID, catalogID, categoryID string) (CategoryResponse, error)
+		EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (CategoryCreateResponse, error)
 	}
 
 	catalogService struct {
@@ -223,6 +224,51 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 	return cr, json.Unmarshal(resp, &cr)
 }
 
+// EditCategoryInCatalog changes a category in a specified catalog
+//
+// resource status = [AVAILABLE || UNAVAILABLE]
+func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (cr CategoryCreateResponse, err error) {
+	err = verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, "DEFAULT")
+	if err != nil {
+		glg.Error("[SDK] Catalog EditCategoryInCatalog verifyNewCategoryInCatalog: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog EditCategoryInCatalog auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, categoryID)
+	ci := CategoryItem{
+		Status:       resourceStatus,
+		ExternalCode: externalCode,
+		Name:         name,
+		Sequence:     sequence,
+	}
+	body, err := httpadapter.NewJsonReader(ci)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditCategoryInCatalog NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditCategoryInCatalog adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Catalog EditCategoryInCatalog status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not edit category '%s' in catalog '%s'",
+			merchantUUID, catalogID, catalogID)
+		glg.Error("[SDK] Catalog EditCategoryInCatalog err: ", err)
+		return
+	}
+	return cr, json.Unmarshal(resp, &cr)
+}
+
 func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template string) (err error) {
 	if merchantUUID == "" {
 		err = ErrMerchantNotSpecified
@@ -230,6 +276,10 @@ func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, t
 	}
 	if catalogID == "" {
 		err = errors.New("Catalog ID was not specified")
+		return
+	}
+	if len(name) > 100 {
+		err = errors.New("Category name needs to have less than 100 characters")
 		return
 	}
 	if name == "" {
