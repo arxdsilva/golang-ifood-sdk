@@ -32,6 +32,7 @@ type (
 		EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (CategoryCreateResponse, error)
 		DeleteCategoryInCatalog(merchantUUID, catalogID, categoryID string) error
 		ListProducts(merchantUUID string) (Products, error)
+		CreateProduct(merchantUUID string, product Product) error
 	}
 
 	catalogService struct {
@@ -69,6 +70,7 @@ func (c *catalogService) ListAll(merchantUUID string) (ct Catalogs, err error) {
 		glg.Error("[SDK] Catalog ListAll err: ", err)
 		return
 	}
+	glg.Info("[SDK] ListAll catalogs success")
 	return ct, json.Unmarshal(resp, &ct)
 }
 
@@ -111,6 +113,7 @@ func (c *catalogService) ListUnsellableItems(merchantUUID, catalogID string) (ur
 		glg.Error("[SDK] Catalog ListUnsellableItems err: ", err)
 		return
 	}
+	glg.Info("[SDK] List Unsellable Items success")
 	return ur, json.Unmarshal(resp, &ur)
 }
 
@@ -147,6 +150,7 @@ func (c *catalogService) ListAllCategoriesInCatalog(merchantUUID, catalogID stri
 		glg.Error("[SDK] Catalog ListAllCategoriesInCatalog err: ", err)
 		return
 	}
+	glg.Info("[SDK] ListAll Categories success")
 	return cr, json.Unmarshal(resp, &cr)
 }
 
@@ -189,6 +193,7 @@ func (c *catalogService) CreateCategoryInCatalog(merchantUUID, catalogID, name, 
 		glg.Error("[SDK] Catalog CreateCategoryInCatalog err: ", err)
 		return
 	}
+	glg.Info("[SDK] Get Category success")
 	return cr, json.Unmarshal(resp, &cr)
 }
 
@@ -220,6 +225,7 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 		glg.Error("[SDK] Catalog GetCategoryInCatalog err: ", err)
 		return
 	}
+	glg.Info("[SDK] Get Category success")
 	return cr, json.Unmarshal(resp, &cr)
 }
 
@@ -265,6 +271,7 @@ func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, category
 		glg.Error("[SDK] Catalog EditCategoryInCatalog err: ", err)
 		return
 	}
+	glg.Info("[SDK] Edit Category success")
 	return cr, json.Unmarshal(resp, &cr)
 }
 
@@ -296,6 +303,7 @@ func (c *catalogService) DeleteCategoryInCatalog(merchantUUID, catalogID, catego
 		glg.Error("[SDK] Catalog DeleteCategoryInCatalog err: ", err)
 		return
 	}
+	glg.Info("[SDK] Delete product success")
 	return
 }
 
@@ -324,7 +332,49 @@ func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err err
 		glg.Error("[SDK] Catalog ListProducts err: ", err)
 		return
 	}
+	glg.Info("[SDK] List products success")
 	return ps, json.Unmarshal(resp, &ps)
+}
+
+// CreateProduct from a merchant
+func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp Product, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = product.verifyFields(); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct verifyFields: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	body, err := httpadapter.NewJsonReader(product)
+	if err != nil {
+		glg.Error("[SDK] Merchant CreateUnavailabily NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPost, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog CreateProduct adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusCreated {
+		glg.Error("[SDK] Catalog CreateProduct status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create product", merchantUUID)
+		glg.Error("[SDK] Catalog CreateProduct err: ", err)
+		return
+	}
+	if err = json.Unmarshal(resp, &cp); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct Unmarshal err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Create product id '%s' success", cp.ID)
+	return
 }
 
 func verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template string) (err error) {
