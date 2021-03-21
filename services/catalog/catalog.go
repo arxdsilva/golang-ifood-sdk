@@ -145,6 +145,10 @@ func (c *catalogService) ListAllCategoriesInCatalog(merchantUUID, catalogID stri
 }
 
 // CreateCategoryInCatalog adds a category in a specified catalog
+//
+// resource status 	= [AVAILABLE || UNAVAILABLE]
+// template 		= [DEFAULT || PIZZA]
+//
 func (c *catalogService) CreateCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template, externalCode string) (cr CategoryCreateResponse, err error) {
 	err = verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template)
 	if err != nil {
