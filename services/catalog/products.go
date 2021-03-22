@@ -155,7 +155,7 @@ func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err err
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog ListProducts adapter.DoRequest: ", err.Error())
@@ -188,7 +188,7 @@ func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
 	body, err := httpadapter.NewJsonReader(product)
 	if err != nil {
 		glg.Error("[SDK] Catalog CreateProduct NewJsonReader error: ", err.Error())
@@ -235,7 +235,7 @@ func (c *catalogService) EditProduct(merchantUUID, productID string, product Pro
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
 		merchantUUID, productID)
 	body, err := httpadapter.NewJsonReader(product)
 	if err != nil {
@@ -279,7 +279,7 @@ func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err erro
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
 		merchantUUID, productID)
 	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {
@@ -319,7 +319,7 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s/status",
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products/%s/status",
 		merchantUUID, productID)
 	bodyStatus := struct {
 		Status string `json:"status"`
@@ -361,7 +361,7 @@ func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
 	body, err := httpadapter.NewJsonReader(pizza)
 	if err != nil {
 		glg.Error("[SDK] Catalog CreatePizza NewJsonReader error: ", err.Error())
@@ -399,7 +399,7 @@ func (c *catalogService) ListPizzas(merchantUUID string) (pz Pizzas, err error) 
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog ListPizzas adapter.DoRequest: ", err.Error())
@@ -437,7 +437,7 @@ func (c *catalogService) UpdatePizza(merchantUUID string, pizza Pizza) (err erro
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizza.ID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizza.ID)
 	body, err := httpadapter.NewJsonReader(pizza)
 	if err != nil {
 		glg.Error("[SDK] Catalog UpdatePizza NewJsonReader error: ", err.Error())
@@ -483,7 +483,7 @@ func (c *catalogService) UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID st
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizzaID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizzaID)
 	updateBody := struct {
 		Status string `json:"status"`
 	}{pizzaStatus}
@@ -507,6 +507,47 @@ func (c *catalogService) UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID st
 	return
 }
 
+// LinkPizzaToCategory in a merchant
+func (c *catalogService) LinkPizzaToCategory(merchantUUID, categoryID string, pizza Pizza) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", categoryID); err != nil {
+		glg.Error("[SDK] Catalog LinkPizzaToCategory verifyCategoryItems: ", err.Error())
+		return
+	}
+	if pizza.ID == "" {
+		err = errors.New("Pizza ID not specified")
+		glg.Error("[SDK] Catalog LinkPizzaToCategory verifyFields: ", err.Error(), " merchant ", merchantUUID)
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog LinkPizzaToCategory auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := v2Endpoint + fmt.Sprintf(
+		"/merchants/%s/pizzas/%s/categories/%s", merchantUUID, pizza.ID, categoryID)
+	body, err := httpadapter.NewJsonReader(pizza)
+	if err != nil {
+		glg.Error("[SDK] Catalog LinkPizzaToCategory NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := c.adapter.DoRequest(http.MethodPost, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog LinkPizzaToCategory adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog LinkPizzaToCategory status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not link pizza id '%s' to category '%s'",
+			merchantUUID, pizza.ID, categoryID)
+		glg.Error("[SDK] Catalog LinkPizzaToCategory err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizza.ID, merchantUUID)
+	return
+}
+
 // UnlinkPizzaCategory in a merchant category
 func (c *catalogService) UnlinkPizzaCategory(merchantUUID, pizzaID, categoryID string) (err error) {
 	if err = verifyCategoryItems(merchantUUID, "catalogID", categoryID); err != nil {
@@ -524,7 +565,7 @@ func (c *catalogService) UnlinkPizzaCategory(merchantUUID, pizzaID, categoryID s
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/pizzas/%s/categories/%s", merchantUUID, pizzaID, categoryID)
 	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {
