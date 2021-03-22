@@ -75,29 +75,29 @@ type (
 		// } `json:"sellingOption"`
 	}
 	CategoryItem struct {
-		ID                  string   `json:"id"`
-		Name                string   `json:"name"`
-		Status              string   `json:"status"`
-		ExternalCode        string   `json:"externalCode"`
-		Template            string   `json:"template"`
-		AcceptedFractions   []int    `json:"acceptedFractions"`
-		DietaryRestrictions []string `json:"dietaryRestrictions"`
-		Sequence            int      `json:"sequence"`
-		Price               Price    `json:"price"`
+		ID                  string    `json:"id"`
+		Name                string    `json:"name"`
+		Status              string    `json:"status"`
+		ExternalCode        string    `json:"externalCode"`
+		Template            string    `json:"template"`
+		AcceptedFractions   []float64 `json:"acceptedFractions"`
+		DietaryRestrictions []string  `json:"dietaryRestrictions"`
+		Sequence            float64   `json:"sequence"`
+		Price               Price     `json:"price"`
 	}
 
 	CategoryCreateResponse struct {
-		ID           string `json:"id"`
-		Name         string `json:"name"`
-		ExternalCode string `json:"externalCode"`
-		Status       string `json:"status"`
-		Sequence     int    `json:"sequence"`
-		Template     string `json:"template"`
+		ID           string  `json:"id"`
+		Name         string  `json:"name"`
+		ExternalCode string  `json:"externalCode"`
+		Status       string  `json:"status"`
+		Sequence     float64 `json:"sequence"`
+		Template     string  `json:"template"`
 	}
 
 	Price struct {
-		Value         int `json:"value"`
-		OriginalValue int `json:"originalValue"`
+		Value         float64 `json:"value"`
+		OriginalValue float64 `json:"originalValue"`
 	}
 
 	Shift struct {

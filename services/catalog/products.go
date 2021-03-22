@@ -23,6 +23,19 @@ type (
 		DietaryRestrictions []string `json:"dietaryRestrictions"`
 		Ean                 string   `json:"ean"`
 	}
+	ProductLink struct {
+		Status              string   `json:"status"`
+		ID                  string   `json:"id"`
+		Name                string   `json:"name"`
+		Description         string   `json:"description"`
+		ExternalCode        string   `json:"externalCode"`
+		Image               string   `json:"image"`
+		Price               Price    `json:"price"`
+		Shifts              []Shift  `json:"shifts"`
+		Serving             string   `json:"serving"`
+		DietaryRestrictions []string `json:"dietaryRestrictions"`
+		Ean                 string   `json:"ean"`
+	}
 
 	Pizzas []Pizza
 	Pizza  struct {
@@ -326,7 +339,7 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 	}{Status: productStatus}
 	body, err := httpadapter.NewJsonReader(bodyStatus)
 	if err != nil {
-		glg.Error("[SDK] Catalog EditProduct NewJsonReader error: ", err.Error())
+		glg.Error("[SDK] Catalog UpdateProductStatus NewJsonReader error: ", err.Error())
 		return
 	}
 	_, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, body, headers)
@@ -341,6 +354,53 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 		return
 	}
 	glg.Infof("[SDK] Catalog UpdateProductStatus id '%s' success, merchant '%s'", productID, merchantUUID)
+	return
+}
+
+// LinkProductToCategory in a merchant
+func (c *catalogService) LinkProductToCategory(merchantUUID, categoryID string, product ProductLink) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", categoryID); err != nil {
+		glg.Error("[SDK] Catalog LinkProductToCategory verifyCategoryItems: ", err.Error())
+		return
+	}
+	if product.ID == "" {
+		err = errors.New("productID not specified")
+		glg.Error("[SDK] Catalog LinkProductToCategory err: ", err.Error())
+		return
+	}
+	if (product.Status != "AVAILABLE") && (product.Status != "UNAVAILABLE") {
+		err = fmt.Errorf("product status '%s' should be 'AVAILABLE' or 'UNAVAILABLE'", product.Status)
+		glg.Error("[SDK] Catalog LinkProductToCategory err: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog LinkProductToCategory auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/categories/%s/products/%s",
+		merchantUUID, categoryID, product.ID)
+	body, err := httpadapter.NewJsonReader(product)
+	if err != nil {
+		glg.Error("[SDK] Catalog LinkProductToCategory NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog LinkProductToCategory adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusCreated {
+		glg.Error("[SDK] Catalog LinkProductToCategory status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not link product id '%s' to category '%s'",
+			merchantUUID, product.ID, categoryID)
+		glg.Error("[SDK] Catalog LinkProductToCategory err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog LinkProductToCategory id '%s' success, merchant '%s'", product.ID, merchantUUID)
 	return
 }
 
