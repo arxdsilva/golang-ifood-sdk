@@ -120,7 +120,7 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 // EditCategoryInCatalog changes a category in a specified catalog
 //
 // resource status = [AVAILABLE || UNAVAILABLE]
-func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (cr CategoryCreateResponse, err error) {
+func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence float64) (cr CategoryCreateResponse, err error) {
 	err = verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, "DEFAULT")
 	if err != nil {
 		glg.Error("[SDK] Catalog EditCategoryInCatalog verifyNewCategoryInCatalog: ", err.Error())
