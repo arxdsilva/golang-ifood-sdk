@@ -418,3 +418,42 @@ func (c *catalogService) ListPizzas(merchantUUID string) (pz Pizzas, err error) 
 	glg.Infof("[SDK] List pizzas merchant '%s' success", merchantUUID)
 	return
 }
+
+// UpdatePizza in a merchant
+func (c *catalogService) UpdatePizza(merchantUUID string, pizza Pizza) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog UpdatePizza verifyCategoryItems: ", err.Error())
+		return
+	}
+	if pizza.ID == "" {
+		err = errors.New("Pizza ID not specified")
+		glg.Error("[SDK] Catalog UpdatePizza verifyFields: ", err.Error(), " merchant ", merchantUUID)
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog UpdatePizza auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizza.ID)
+	body, err := httpadapter.NewJsonReader(pizza)
+	if err != nil {
+		glg.Error("[SDK] Catalog UpdatePizza NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := c.adapter.DoRequest(http.MethodPut, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog UpdatePizza adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog UpdatePizza status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create pizza", merchantUUID)
+		glg.Error("[SDK] Catalog UpdatePizza err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizza.ID, merchantUUID)
+	return
+}
