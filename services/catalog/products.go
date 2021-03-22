@@ -23,6 +23,15 @@ type (
 		DietaryRestrictions []string `json:"dietaryRestrictions"`
 		Ean                 string   `json:"ean"`
 	}
+
+	Pizza struct {
+		ID       string         `json:"id"`
+		Sizes    []CategoryItem `json:"sizes"`
+		Crusts   []CategoryItem `json:"crusts"`
+		Edges    []CategoryItem `json:"edges"`
+		Toppings []CategoryItem `json:"toppings"`
+		Shifts   []Shift        `json:"shifts"`
+	}
 )
 
 func (p *Product) verifyFields() (err error) {
