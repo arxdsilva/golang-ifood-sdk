@@ -22,7 +22,7 @@ func (c *catalogService) ListAllCategoriesInCatalog(merchantUUID, catalogID stri
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/categories", merchantUUID, catalogID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
@@ -60,7 +60,7 @@ func (c *catalogService) CreateCategoryInCatalog(merchantUUID, catalogID, name, 
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/categories", merchantUUID, catalogID)
 	ci := CategoryItem{Name: name, Status: resourceStatus, Template: template, ExternalCode: externalCode}
 	reader, err := httpadapter.NewJsonReader(ci)
@@ -98,7 +98,7 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, catalogID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
@@ -134,7 +134,7 @@ func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, category
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, categoryID)
 	ci := CategoryItem{
 		Status:       resourceStatus,
@@ -177,7 +177,7 @@ func (c *catalogService) DeleteCategoryInCatalog(merchantUUID, catalogID, catego
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, categoryID)
 	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {

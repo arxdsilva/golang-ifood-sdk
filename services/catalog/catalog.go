@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	V2Endpoint = "/catalog/v2.0"
+	v2Endpoint = "/catalog/v2.0"
 )
 
 type catalogService struct {
@@ -39,7 +39,7 @@ func (c *catalogService) ListAll(merchantUUID string) (ct Catalogs, err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/catalogs", merchantUUID)
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/catalogs", merchantUUID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog ListAll adapter.DoRequest: ", err.Error())
@@ -73,7 +73,7 @@ func (c *catalogService) ListUnsellableItems(merchantUUID, catalogID string) (ur
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
-	endpoint := V2Endpoint + fmt.Sprintf(
+	endpoint := v2Endpoint + fmt.Sprintf(
 		"/merchants/%s/catalogs/%s/unsellable-items", merchantUUID, catalogID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
