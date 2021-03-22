@@ -404,6 +404,37 @@ func (c *catalogService) LinkProductToCategory(merchantUUID, categoryID string, 
 	return
 }
 
+// UnlinkProductToCategory in a merchant
+func (c *catalogService) UnlinkProductToCategory(merchantUUID, categoryID, productID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", categoryID); err != nil {
+		glg.Error("[SDK] Catalog UnlinkProductToCategory verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog UnlinkProductToCategory auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/categories/%s/products/%s",
+		merchantUUID, categoryID, productID)
+	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog UnlinkProductToCategory adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog UnlinkProductToCategory status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not unlink product id '%s' to category '%s'",
+			merchantUUID, productID, categoryID)
+		glg.Error("[SDK] Catalog UnlinkProductToCategory err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog UnlinkProductToCategory id '%s' success, merchant '%s'", productID, merchantUUID)
+	return
+}
+
 // CreatePizza in a merchant
 func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza, err error) {
 	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {

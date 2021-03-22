@@ -20,4 +20,5 @@ type Service interface {
 	UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID string) error
 	UnlinkPizzaCategory(merchantUUID, pizzaID, categoryID string) error
 	LinkPizzaToCategory(merchantUUID, categoryID string, pizza Pizza) error
+	UnlinkProductToCategory(merchantUUID, categoryID, productID string) error
 }
