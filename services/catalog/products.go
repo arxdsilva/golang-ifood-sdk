@@ -24,7 +24,8 @@ type (
 		Ean                 string   `json:"ean"`
 	}
 
-	Pizza struct {
+	Pizzas []Pizza
+	Pizza  struct {
 		ID       string         `json:"id"`
 		Sizes    []CategoryItem `json:"sizes"`
 		Crusts   []CategoryItem `json:"crusts"`
@@ -166,7 +167,7 @@ func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err err
 		glg.Error("[SDK] Catalog ListProducts err: ", err)
 		return
 	}
-	glg.Info("[SDK] List products success")
+	glg.Infof("[SDK] List products success, merchant '%s'", merchantUUID)
 	return ps, json.Unmarshal(resp, &ps)
 }
 
@@ -208,7 +209,7 @@ func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp
 		glg.Error("[SDK] Catalog CreateProduct Unmarshal err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Create product id '%s' success", cp.ID)
+	glg.Infof("[SDK] Create product id '%s' success, merchant '%s'", cp.ID, merchantUUID)
 	return
 }
 
@@ -256,7 +257,7 @@ func (c *catalogService) EditProduct(merchantUUID, productID string, product Pro
 		glg.Error("[SDK] Catalog EditProduct Unmarshal err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Catalog EditProduct id '%s' success", productID)
+	glg.Infof("[SDK] Catalog EditProduct id '%s' success, merchant '%s'", productID, merchantUUID)
 	return
 }
 
@@ -291,7 +292,7 @@ func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err erro
 		glg.Error("[SDK] Catalog DeleteProduct err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Catalog DeleteProduct id '%s' success", productID)
+	glg.Infof("[SDK] Catalog DeleteProduct id '%s' success, merchant '%s'", productID, merchantUUID)
 	return
 }
 
@@ -339,7 +340,7 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 		glg.Error("[SDK] Catalog UpdateProductStatus err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Catalog UpdateProductStatus id '%s' success", productID)
+	glg.Infof("[SDK] Catalog UpdateProductStatus id '%s' success, merchant '%s'", productID, merchantUUID)
 	return
 }
 
@@ -381,6 +382,6 @@ func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza
 		glg.Error("[SDK] Catalog CreatePizza Unmarshal err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Create pizza id '%s' success", cp.ID)
+	glg.Infof("[SDK] Create pizza id '%s' success, merchant '%s'", cp.ID, merchantUUID)
 	return
 }
