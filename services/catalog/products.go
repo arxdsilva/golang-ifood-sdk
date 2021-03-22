@@ -79,6 +79,68 @@ func (p *Product) verifyFields() (err error) {
 	return
 }
 
+func (p *Pizza) verifyFields() (err error) {
+	if len(p.Sizes) == 0 {
+		return ErrSizesNotSpecified
+	}
+	if len(p.Crusts) == 0 {
+		return ErrCrustsNotSpecified
+	}
+	if len(p.Edges) == 0 {
+		return ErrEdgesNotSpecified
+	}
+	if len(p.Toppings) == 0 {
+		return ErrToppingsNotSpecified
+	}
+	if len(p.Shifts) == 0 {
+		return ErrShiftsNotSpecified
+	}
+	for _, size := range p.Sizes {
+		if size.Name == "" {
+			return ErrSizeNameNotSpecified
+		}
+		if (size.Status != "AVAILABLE") && (size.Status != "UNAVAILABLE") {
+			return ErrInvalidPizzaStatus
+		}
+		if len(size.AcceptedFractions) == 0 {
+			return ErrNoAcceptedFractions
+		}
+	}
+	for _, crust := range p.Crusts {
+		if crust.Name == "" {
+			return ErrCrustNameNotSpecified
+		}
+		if (crust.Status != "AVAILABLE") && (crust.Status != "UNAVAILABLE") {
+			return ErrInvalidPizzaCrustStatus
+		}
+	}
+	for _, edge := range p.Edges {
+		if edge.Name == "" {
+			return ErrEdgeNameNotSpecified
+		}
+		if (edge.Status != "AVAILABLE") && (edge.Status != "UNAVAILABLE") {
+			return ErrInvalidPizzaEdgeStatus
+		}
+	}
+	for _, topping := range p.Toppings {
+		if topping.Name == "" {
+			return ErrToppingNameNotSpecified
+		}
+		if (topping.Status != "AVAILABLE") && (topping.Status != "UNAVAILABLE") {
+			return ErrInvalidPizzaEdgeStatus
+		}
+	}
+	for _, shift := range p.Shifts {
+		if shift.StartTime == "" {
+			return ErrInvalidPizzaStartEndTime
+		}
+		if shift.EndTime == "" {
+			return ErrInvalidPizzaStartEndTime
+		}
+	}
+	return
+}
+
 // ListProducts from a merchant
 func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err error) {
 	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
@@ -278,5 +340,47 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 		return
 	}
 	glg.Infof("[SDK] Catalog UpdateProductStatus id '%s' success", productID)
+	return
+}
+
+// CreatePizza in a merchant
+func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog CreatePizza verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = pizza.verifyFields(); err != nil {
+		glg.Error("[SDK] Catalog CreatePizza verifyFields: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog CreatePizza auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	body, err := httpadapter.NewJsonReader(pizza)
+	if err != nil {
+		glg.Error("[SDK] Catalog CreatePizza NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPost, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog CreatePizza adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusCreated {
+		glg.Error("[SDK] Catalog CreatePizza status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create pizza", merchantUUID)
+		glg.Error("[SDK] Catalog CreatePizza err: ", err)
+		return
+	}
+	if err = json.Unmarshal(resp, &cp); err != nil {
+		glg.Error("[SDK] Catalog CreatePizza Unmarshal err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Create pizza id '%s' success", cp.ID)
 	return
 }
