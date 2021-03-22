@@ -506,3 +506,39 @@ func (c *catalogService) UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID st
 	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizzaID, merchantUUID)
 	return
 }
+
+// UnlinkPizzaCategory in a merchant category
+func (c *catalogService) UnlinkPizzaCategory(merchantUUID, pizzaID, categoryID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", categoryID); err != nil {
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory verifyCategoryItems: ", err.Error())
+		return
+	}
+	if pizzaID == "" {
+		err = errors.New("Pizza ID not specified")
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory verifyFields: ", err.Error(), " merchant ", merchantUUID)
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf(
+		"/merchants/%s/pizzas/%s/categories/%s", merchantUUID, pizzaID, categoryID)
+	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf(
+			"Merchant '%s' could unlink pizza id '%s' from category '%s'",
+			merchantUUID, pizzaID, categoryID)
+		glg.Error("[SDK] Catalog UnlinkPizzaCategory err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizzaID, merchantUUID)
+	return
+}
