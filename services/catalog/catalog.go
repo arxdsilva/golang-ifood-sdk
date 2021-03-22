@@ -15,12 +15,6 @@ const (
 	V2Endpoint = "/catalog/v2.0"
 )
 
-var (
-	ErrMerchantNotSpecified = errors.New("merchant not specified")
-	ErrCatalogNotSpecified  = errors.New("Catalog ID was not specified")
-	ErrCategoryNotSpecified = errors.New("Category ID was not specified")
-)
-
 type catalogService struct {
 	adapter adapters.Http
 	auth    auth.Service
