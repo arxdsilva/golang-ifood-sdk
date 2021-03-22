@@ -1,8 +1,13 @@
 package catalog
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	"github.com/kpango/glg"
 )
 
 type (
@@ -62,5 +67,207 @@ func (p *Product) verifyFields() (err error) {
 			}
 		}
 	}
+	return
+}
+
+// ListProducts from a merchant
+func (c *catalogService) ListProducts(merchantUUID string) (ps Products, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog ListProducts verifyCategoryItems: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog ListProducts auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog ListProducts adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog ListProducts status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not get all products", merchantUUID)
+		glg.Error("[SDK] Catalog ListProducts err: ", err)
+		return
+	}
+	glg.Info("[SDK] List products success")
+	return ps, json.Unmarshal(resp, &ps)
+}
+
+// CreateProduct in a merchant
+func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp Product, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = product.verifyFields(); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct verifyFields: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	body, err := httpadapter.NewJsonReader(product)
+	if err != nil {
+		glg.Error("[SDK] Catalog CreateProduct NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPost, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog CreateProduct adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusCreated {
+		glg.Error("[SDK] Catalog CreateProduct status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create product", merchantUUID)
+		glg.Error("[SDK] Catalog CreateProduct err: ", err)
+		return
+	}
+	if err = json.Unmarshal(resp, &cp); err != nil {
+		glg.Error("[SDK] Catalog CreateProduct Unmarshal err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Create product id '%s' success", cp.ID)
+	return
+}
+
+// EditProduct in a merchant
+func (c *catalogService) EditProduct(merchantUUID, productID string, product Product) (cp Product, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog EditProduct verifyCategoryItems: ", err.Error())
+		return
+	}
+	if productID == "" {
+		err = errors.New("productID not specified")
+		glg.Error("[SDK] Catalog EditProduct err: ", err.Error())
+		return
+	}
+	if err = product.verifyFields(); err != nil {
+		glg.Error("[SDK] Catalog EditProduct verifyFields: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog EditProduct auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
+		merchantUUID, productID)
+	body, err := httpadapter.NewJsonReader(product)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditProduct NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPut, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditProduct adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Error("[SDK] Catalog EditProduct status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not edit product id '%s'", merchantUUID, productID)
+		glg.Error("[SDK] Catalog EditProduct err: ", err)
+		return
+	}
+	if err = json.Unmarshal(resp, &cp); err != nil {
+		glg.Error("[SDK] Catalog EditProduct Unmarshal err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog EditProduct id '%s' success", productID)
+	return
+}
+
+// DeleteProduct in a merchant
+func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct verifyCategoryItems: ", err.Error())
+		return
+	}
+	if productID == "" {
+		err = errors.New("productID not specified")
+		glg.Error("[SDK] Catalog DeleteProduct err: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
+		merchantUUID, productID)
+	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteProduct adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog DeleteProduct status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not delete product id '%s'", merchantUUID, productID)
+		glg.Error("[SDK] Catalog DeleteProduct err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog DeleteProduct id '%s' success", productID)
+	return
+}
+
+// UpdateProductStatus in a merchant
+func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productStatus string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog UpdateProductStatus verifyCategoryItems: ", err.Error())
+		return
+	}
+	if productID == "" {
+		err = errors.New("productID not specified")
+		glg.Error("[SDK] Catalog UpdateProductStatus err: ", err.Error())
+		return
+	}
+	if (productStatus != "AVAILABLE") && (productStatus != "UNAVAILABLE") {
+		err = fmt.Errorf("product status '%s' should be 'AVAILABLE' or 'UNAVAILABLE'", productStatus)
+		glg.Error("[SDK] Catalog UpdateProductStatus err: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog UpdateProductStatus auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products/%s/status",
+		merchantUUID, productID)
+	bodyStatus := struct {
+		Status string `json:"status"`
+	}{Status: productStatus}
+	body, err := httpadapter.NewJsonReader(bodyStatus)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditProduct NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog UpdateProductStatus adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog UpdateProductStatus status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not update product id '%s'", merchantUUID, productID)
+		glg.Error("[SDK] Catalog UpdateProductStatus err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog UpdateProductStatus id '%s' success", productID)
 	return
 }
