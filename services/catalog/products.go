@@ -407,7 +407,7 @@ func (c *catalogService) ListPizzas(merchantUUID string) (pz Pizzas, err error) 
 	}
 	if status != http.StatusCreated {
 		glg.Error("[SDK] Catalog ListPizzas status code: ", status, " merchant: ", merchantUUID)
-		err = fmt.Errorf("Merchant '%s' could not create pizza", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not list pizzas", merchantUUID)
 		glg.Error("[SDK] Catalog ListPizzas err: ", err)
 		return
 	}
@@ -455,5 +455,54 @@ func (c *catalogService) UpdatePizza(merchantUUID string, pizza Pizza) (err erro
 		return
 	}
 	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizza.ID, merchantUUID)
+	return
+}
+
+// UpdatePizzaStatus in a merchant
+//
+// pizzaStatus = [AVAILABLE || UNAVAILABLE]
+func (c *catalogService) UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID string) (err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog UpdatePizzaStatus verifyCategoryItems: ", err.Error())
+		return
+	}
+	if pizzaID == "" {
+		err = errors.New("Pizza ID not specified")
+		glg.Error("[SDK] Catalog UpdatePizzaStatus verifyFields: ", err.Error(), " merchant ", merchantUUID)
+		return
+	}
+	if (pizzaStatus != "AVAILABLE") && (pizzaStatus != "UNAVAILABLE") {
+		err = errors.New("Pizza ID not specified")
+		glg.Error("[SDK] Catalog UpdatePizzaStatus verifyFields: ", err.Error(), " merchant ", merchantUUID)
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog UpdatePizzaStatus auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas/%s", merchantUUID, pizzaID)
+	updateBody := struct {
+		Status string `json:"status"`
+	}{pizzaStatus}
+	body, err := httpadapter.NewJsonReader(updateBody)
+	if err != nil {
+		glg.Error("[SDK] Catalog UpdatePizzaStatus NewJsonReader error: ", err.Error())
+		return
+	}
+	_, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog UpdatePizzaStatus adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status >= http.StatusBadRequest {
+		glg.Error("[SDK] Catalog UpdatePizzaStatus status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not update pizza id '%s' status", merchantUUID, pizzaID)
+		glg.Error("[SDK] Catalog UpdatePizzaStatus err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Update pizza id '%s' success, merchant '%s'", pizzaID, merchantUUID)
 	return
 }

@@ -16,4 +16,5 @@ type Service interface {
 	CreatePizza(merchantUUID string, pizza Pizza) (Pizza, error)
 	ListPizzas(merchantUUID string) (Pizzas, error)
 	UpdatePizza(merchantUUID string, pizza Pizza) error
+	UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID string) error
 }
