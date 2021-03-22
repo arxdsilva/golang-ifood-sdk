@@ -385,3 +385,36 @@ func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza
 	glg.Infof("[SDK] Create pizza id '%s' success, merchant '%s'", cp.ID, merchantUUID)
 	return
 }
+
+// ListPizzas in a merchant
+func (c *catalogService) ListPizzas(merchantUUID string) (pz Pizzas, err error) {
+	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
+		glg.Error("[SDK] Catalog ListPizzas verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = c.auth.Validate(); err != nil {
+		glg.Error("[SDK] Catalog ListPizzas auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
+	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog ListPizzas adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusCreated {
+		glg.Error("[SDK] Catalog ListPizzas status code: ", status, " merchant: ", merchantUUID)
+		err = fmt.Errorf("Merchant '%s' could not create pizza", merchantUUID)
+		glg.Error("[SDK] Catalog ListPizzas err: ", err)
+		return
+	}
+	if err = json.Unmarshal(resp, &pz); err != nil {
+		glg.Errorf("[SDK] Catalog ListPizzas merchant '%s' Unmarshal err: %s", merchantUUID, err.Error())
+		return
+	}
+	glg.Infof("[SDK] List pizzas merchant '%s' success", merchantUUID)
+	return
+}
