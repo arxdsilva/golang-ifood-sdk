@@ -13,4 +13,5 @@ type Service interface {
 	EditProduct(merchantUUID, productID string, product Product) (Product, error)
 	DeleteProduct(merchantUUID, productID string) error
 	UpdateProductStatus(merchantUUID, productID, productStatus string) error
+	CreatePizza(merchantUUID string, pizza Pizza) (Pizza, error)
 }

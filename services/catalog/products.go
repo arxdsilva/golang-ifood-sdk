@@ -360,7 +360,7 @@ func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
-	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/products", merchantUUID)
+	endpoint := V2Endpoint + fmt.Sprintf("/merchants/%s/pizzas", merchantUUID)
 	body, err := httpadapter.NewJsonReader(pizza)
 	if err != nil {
 		glg.Error("[SDK] Catalog CreatePizza NewJsonReader error: ", err.Error())
