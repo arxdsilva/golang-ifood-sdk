@@ -81,6 +81,7 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 		return
 	}
 	if err = json.Unmarshal(resp, &c); err != nil {
+		glg.Error("[SDK] Unmarshal: ", err)
 		return
 	}
 	glg.Info("[SDK] Authenticate success")
