@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,4 +37,33 @@ func TestHttpAdapter_Do_Error(t *testing.T) {
 	assert.Nil(t, resp)
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, status)
+}
+
+func TestNewJsonReader_NilErr(t *testing.T) {
+	_, err := NewJsonReader(nil)
+	assert.Equal(t, ErrorNilData, err)
+}
+
+func TestNewJsonReader_OK(t *testing.T) {
+	someObject := struct {
+		Name string `json:"name"`
+	}{Name: "Newman"}
+	reader, err := NewJsonReader(someObject)
+	assert.Nil(t, err)
+	assert.NotNil(t, reader)
+}
+
+func TestNewMultipartReader_NilErr(t *testing.T) {
+	_, _, err := NewMultipartReader(nil)
+	assert.Equal(t, ErrorNilData, err)
+}
+
+func TestNewMultipartReader_OK(t *testing.T) {
+	someObject := struct {
+		Name string `json:"name"`
+	}{Name: "Newman"}
+	reader, boudary, err := NewMultipartReader(someObject)
+	assert.Nil(t, err)
+	assert.NotNil(t, reader)
+	assert.NotEmpty(t, boudary)
 }
