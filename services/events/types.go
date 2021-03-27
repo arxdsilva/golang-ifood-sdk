@@ -1,6 +1,6 @@
 package events
 
-var ValidEvents = map[string]string{
+var ValidEventsByCodeName = map[string]string{
 	"COL": "PLACED",
 	"REC": "INTEGRATED",
 	"CFM": "CONFIRMED",
@@ -35,4 +35,41 @@ var ValidEvents = map[string]string{
 	"UPT": "UPDATED",
 	"BOA": "BOX_ASSIGNED",
 	"RPS": "RECOMMENDED_PREPARATION_START",
+}
+
+var ValidEventsByNameCode = map[string]string{
+	"PLACED":                          "COL",
+	"INTEGRATED":                      "REC",
+	"CONFIRMED":                       "CFM",
+	"CANCELLATION_REQUESTED":          "CAR",
+	"CANCELLATION_REQUEST_FAILED":     "CAF",
+	"CANCELLED":                       "CAN",
+	"GOING_TO_ORIGIN":                 "DRE",
+	"ARRIVED_AT_ORIGIN":               "NRE",
+	"READY_TO_DELIVER":                "RTD",
+	"COLLECTED":                       "CLT",
+	"DISPATCHED":                      "DCL",
+	"DELIVERED":                       "NCL",
+	"CONCLUDED":                       "CON",
+	"PICKUP_AREA_ASSIGNED":            "PAA",
+	"DELAY_NOTIFICATION":              "DNO",
+	"CHANGE_PREPARATION_TIME":         "CPT",
+	"REQUEST_DRIVER_AVAILABILITY":     "RDA",
+	"REQUEST_DRIVER":                  "RDR",
+	"REQUEST_DRIVER_SUCCESS":          "RDS",
+	"REQUEST_DRIVER_FAILED":           "RDF",
+	"ASSIGN_DRIVER":                   "ADR",
+	"CONSUMER_CANCELLATION_REQUESTED": "CCR",
+	"CONSUMER_CANCELLATION_ACCEPTED":  "CCA",
+	"CONSUMER_CANCELLATION_DENIED":    "CCD",
+	"ADDED_TO_GROUP":                  "ATG",
+	"EXECUTED_WITH_GROUP":             "EWG",
+	"CANCELLED_WITH_GROUP":            "CWG",
+	"COLLECTED_IN_GROUP":              "CIG",
+	"ASSIGNED_WITH_GROUP":             "AWG",
+	"UPDATE_REQUESTED":                "UPR",
+	"UPDATE_DENIED":                   "UPD",
+	"UPDATED":                         "UPT",
+	"BOX_ASSIGNED":                    "BOA",
+	"RECOMMENDED_PREPARATION_START":   "RPS",
 }
