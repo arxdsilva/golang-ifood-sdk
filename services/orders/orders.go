@@ -88,7 +88,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 	}
 	if status != http.StatusOK {
 		glg.Error("[SDK] Orders GetDetails status code: ", status)
-		err = fmt.Errorf("Order reference %s could not retrieve details", orderReference)
+		err = fmt.Errorf("Order reference '%s' could not retrieve details", orderReference)
 		glg.Error("[SDK] Orders GetDetails err: ", err)
 		return
 	}
