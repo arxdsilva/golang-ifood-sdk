@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var merchants = `[
@@ -495,4 +497,82 @@ func TestAvailabily_ErrMerchantNotSpecified(t *testing.T) {
 	_, err := merchantService.Availability("")
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestAvailabily_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	id, err := uuid.NewV1()
+	assert.Nil(t, err)
+	_, err = merchantService.Availability(id.String())
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestDeleteUnavailability_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	id, err := uuid.NewV1()
+	assert.Nil(t, err)
+	err = merchantService.DeleteUnavailability(id.String(), id.String())
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestCreateUnavailabilityNow_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	id, err := uuid.NewV1()
+	assert.Nil(t, err)
+	_, err = merchantService.CreateUnavailabilityNow(id.String(), "", 10)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestUnavailabilities_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	id, err := uuid.NewV1()
+	assert.Nil(t, err)
+	_, err = merchantService.Unavailabilities(id.String())
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestListAll_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	_, err := merchantService.ListAll()
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
 }
