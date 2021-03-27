@@ -236,7 +236,7 @@ func TestCreateUnavailabilyNow_ErrMerchantNotSpecified(t *testing.T) {
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
 	merchantService := New(adapter, &am)
 	assert.NotNil(t, merchantService)
-	unav, err := merchantService.CreateUnavailabilyNow("", "", 10)
+	unav, err := merchantService.CreateUnavailabilityNow("", "", 10)
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
 	assert.Equal(t, UnavailabilityResponse{}, unav)
@@ -261,7 +261,7 @@ func TestCreateUnavailabilyNow_OK(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	unav, err := merchantService.CreateUnavailabilyNow(id.String(), "", 10)
+	unav, err := merchantService.CreateUnavailabilityNow(id.String(), "", 10)
 	assert.Nil(t, err)
 	assert.NotNil(t, unav.ID)
 }
@@ -284,7 +284,7 @@ func TestCreateUnavailabilyNow_StatusBadRequest(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	unav, err := merchantService.CreateUnavailabilyNow(id.String(), "", 10)
+	unav, err := merchantService.CreateUnavailabilityNow(id.String(), "", 10)
 	assert.NotNil(t, err)
 	assert.Equal(t, UnavailabilityResponse{}, unav)
 	assert.Contains(t, err.Error(), "not create")
@@ -309,7 +309,7 @@ func TestDeleteUnavailabily_OK(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	err = merchantService.DeleteUnavailabily(id.String(), id.String())
+	err = merchantService.DeleteUnavailability(id.String(), id.String())
 	assert.Nil(t, err)
 }
 
@@ -330,7 +330,7 @@ func TestDeleteUnavailabily_NoMerchant(t *testing.T) {
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
 	merchantService := New(adapter, &am)
 	assert.NotNil(t, merchantService)
-	err := merchantService.DeleteUnavailabily("", "")
+	err := merchantService.DeleteUnavailability("", "")
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantORUnavailabilityIDNotSpecified, err)
 }
@@ -354,12 +354,12 @@ func TestDeleteUnavailabily_StatusBadRequest(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	err = merchantService.DeleteUnavailabily(id.String(), id.String())
+	err = merchantService.DeleteUnavailability(id.String(), id.String())
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "could not delete")
 }
 
-func TestDeleteAvailabily_OK(t *testing.T) {
+func TestAvailabily_OK(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Contains(t, r.URL.Path, "/availabilities")
@@ -379,13 +379,13 @@ func TestDeleteAvailabily_OK(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	ar, err := merchantService.Availabily(id.String())
+	ar, err := merchantService.Availability(id.String())
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(ar))
 	assert.Equal(t, true, ar[0].Available)
 }
 
-func TestDeleteAvailabily_StatusBadRequest(t *testing.T) {
+func TestAvailabily_StatusBadRequest(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Contains(t, r.URL.Path, "/availabilities")
@@ -404,7 +404,53 @@ func TestDeleteAvailabily_StatusBadRequest(t *testing.T) {
 	assert.NotNil(t, merchantService)
 	id, err := uuid.NewV1()
 	assert.Nil(t, err)
-	ar, err := merchantService.Availabily(id.String())
+	ar, err := merchantService.Availability(id.String())
 	assert.NotNil(t, err)
 	assert.Equal(t, 0, len(ar))
+}
+
+func TestAvailabily_ValidateErr(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/availabilities")
+			assert.Contains(t, r.URL.Path, "/merchant/v2.0/merchants/")
+			assert.NotNil(t, r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	id, err := uuid.NewV1()
+	assert.Nil(t, err)
+	_, err = merchantService.Availability(id.String())
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestAvailabily_ErrMerchantNotSpecified(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, r.URL.Path, "/availabilities")
+			assert.Contains(t, r.URL.Path, "/merchant/v2.0/merchants/")
+			assert.NotNil(t, r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	merchantService := New(adapter, &am)
+	assert.NotNil(t, merchantService)
+	_, err := merchantService.Availability("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
 }

@@ -26,9 +26,9 @@ type (
 	Service interface {
 		ListAll() ([]Merchant, error)
 		Unavailabilities(merchantUUID string) (Unavailabilities, error)
-		CreateUnavailabilyNow(merchantUUID, description string, pauseMinutes int32) (UnavailabilityResponse, error)
-		DeleteUnavailabily(merchantUUID, unavailabilityID string) error
-		Availabily(merchantUUID string) (AvailabilityResponse, error)
+		CreateUnavailabilityNow(merchantUUID, description string, pauseMinutes int32) (UnavailabilityResponse, error)
+		DeleteUnavailability(merchantUUID, unavailabilityID string) error
+		Availability(merchantUUID string) (AvailabilityResponse, error)
 	}
 
 	merchantService struct {
@@ -94,15 +94,15 @@ func (m *merchantService) Unavailabilities(merchantUUID string) (mu Unavailabili
 	return mu, json.Unmarshal(resp, &mu)
 }
 
-// CreateUnavailabilyNow cadastra indisponibilidade no merchant
-func (m *merchantService) CreateUnavailabilyNow(merchantUUID, description string, pauseMinutes int32) (ur UnavailabilityResponse, err error) {
+// CreateUnavailabilityNow cadastra indisponibilidade no merchant
+func (m *merchantService) CreateUnavailabilityNow(merchantUUID, description string, pauseMinutes int32) (ur UnavailabilityResponse, err error) {
 	if merchantUUID == "" {
 		err = ErrMerchantNotSpecified
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow: ", err.Error())
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow: ", err.Error())
 		return
 	}
 	if err = m.auth.Validate(); err != nil {
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow auth.Validate: ", err.Error())
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -112,32 +112,32 @@ func (m *merchantService) CreateUnavailabilyNow(merchantUUID, description string
 	unv := unavailability{Description: description, Minutes: pauseMinutes}
 	reader, err := httpadapter.NewJsonReader(unv)
 	if err != nil {
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow NewJsonReader error: ", err.Error())
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow NewJsonReader error: ", err.Error())
 		return
 	}
 	resp, status, err := m.adapter.DoRequest(http.MethodPost, endpoint, reader, headers)
 	if err != nil {
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow status code: ", status, " merchant: ", merchantUUID)
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow status code: ", status, " merchant: ", merchantUUID)
 		err = fmt.Errorf("Merchant '%s' could not create 'unavailability'", merchantUUID)
-		glg.Error("[SDK] Merchant CreateUnavailabilyNow err: ", err)
+		glg.Error("[SDK] Merchant CreateUnavailabilityNow err: ", err)
 		return
 	}
 	return ur, json.Unmarshal(resp, &ur)
 }
 
-// DeleteUnavailabily remove indisponibilidade no merchant
-func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID string) (err error) {
+// DeleteUnavailability remove indisponibilidade no merchant
+func (m *merchantService) DeleteUnavailability(merchantUUID, unavailabilityID string) (err error) {
 	if (merchantUUID == "") || (unavailabilityID == "") {
 		err = ErrMerchantORUnavailabilityIDNotSpecified
-		glg.Error("[SDK] Merchant DeleteUnavailabily: ", err.Error())
+		glg.Error("[SDK] Merchant DeleteUnavailability: ", err.Error())
 		return
 	}
 	if err = m.auth.Validate(); err != nil {
-		glg.Error("[SDK] Merchant DeleteUnavailabily auth.Validate: ", err.Error())
+		glg.Error("[SDK] Merchant DeleteUnavailability auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -146,27 +146,27 @@ func (m *merchantService) DeleteUnavailabily(merchantUUID, unavailabilityID stri
 	endpoint := fmt.Sprintf("%s/%s/unavailabilities/%s", V1Endpoint, merchantUUID, unavailabilityID)
 	_, status, err := m.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Merchant DeleteUnavailabily adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Merchant DeleteUnavailability adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Error("[SDK] Merchant DeleteUnavailabily status code: ", status, " merchant: ", merchantUUID)
+		glg.Error("[SDK] Merchant DeleteUnavailability status code: ", status, " merchant: ", merchantUUID)
 		err = fmt.Errorf("Merchant '%s' could not delete unavailability id '%s' ", merchantUUID, unavailabilityID)
-		glg.Error("[SDK] Merchant DeleteUnavailabily err: ", err)
+		glg.Error("[SDK] Merchant DeleteUnavailability err: ", err)
 		return
 	}
 	return
 }
 
-// Availabily recebe o status de disponibilidade de um merchant
-func (m *merchantService) Availabily(merchantUUID string) (ar AvailabilityResponse, err error) {
+// Availability recebe o status de disponibilidade de um merchant
+func (m *merchantService) Availability(merchantUUID string) (ar AvailabilityResponse, err error) {
 	if merchantUUID == "" {
 		err = ErrMerchantNotSpecified
-		glg.Error("[SDK] Merchant Availabily: ", err.Error())
+		glg.Error("[SDK] Merchant Availability: ", err.Error())
 		return
 	}
 	if err = m.auth.Validate(); err != nil {
-		glg.Error("[SDK] Merchant Availabily auth.Validate: ", err.Error())
+		glg.Error("[SDK] Merchant Availability auth.Validate: ", err.Error())
 		return
 	}
 	headers := make(map[string]string)
@@ -175,13 +175,13 @@ func (m *merchantService) Availabily(merchantUUID string) (ar AvailabilityRespon
 	endpoint := fmt.Sprintf("/merchant%s/%s/availabilities", V2Endpoint, merchantUUID)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
-		glg.Error("[SDK] Merchant Availabily adapter.DoRequest error: ", err.Error())
+		glg.Error("[SDK] Merchant Availability adapter.DoRequest error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Error("[SDK] Merchant Availabily status code: ", status, " merchant: ", merchantUUID)
+		glg.Error("[SDK] Merchant Availability status code: ", status, " merchant: ", merchantUUID)
 		err = fmt.Errorf("Merchant '%s' could not get availability", merchantUUID)
-		glg.Error("[SDK] Merchant Availabily err: ", err)
+		glg.Error("[SDK] Merchant Availability err: ", err)
 		return
 	}
 	return ar, json.Unmarshal(resp, &ar)
