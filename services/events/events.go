@@ -15,9 +15,11 @@ import (
 
 const (
 	V3Endpoint = "/v3.0/events"
+	V1Endpoint = "/v1.0/events"
 )
 
 var ErrUnauthorized = errors.New("Unauthorized request")
+var ErrReqLimitExceeded = errors.New("EVENTS POLL REQUEST LIMIT EXCEEDED")
 
 type (
 	Service interface {
@@ -29,12 +31,13 @@ type (
 		ID string `json:"id"`
 	}
 
-	Event struct {
-		Code          string            `json:"code"`
-		CorrelationID string            `json:"correlationId"`
-		CreatedAt     time.Time         `json:"createdAt"`
-		ID            string            `json:"id,omitempty"`
-		Metadata      map[string]string `json:"metadata,omitempty"`
+	Events []Event
+	Event  struct {
+		Code          string                 `json:"code"`
+		CorrelationID string                 `json:"correlationId"`
+		CreatedAt     time.Time              `json:"createdAt"`
+		ID            string                 `json:"id,omitempty"`
+		Metadata      map[string]interface{} `json:"metadata,omitempty"`
 	}
 
 	eventService struct {
@@ -62,10 +65,26 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return
 	}
-	if status != http.StatusOK {
-		glg.Info("[SDK] Event Poll status code: ", status)
+	if status == http.StatusNotFound {
+		glg.Info("[SDK] Event adapter.DoRequest No events to poll")
 		return
 	}
+	if status == http.StatusTooManyRequests {
+		err = ErrReqLimitExceeded
+		glg.Warn("[SDK] Event adapter.DoRequest REQUEST LIMIT EXCEEDED")
+		return
+	}
+	if status == http.StatusUnauthorized {
+		err = ErrUnauthorized
+		glg.Warn("[SDK] Event adapter.DoRequest no auth")
+		return
+	}
+	if status != http.StatusOK {
+		err = errors.New("Events could not get polled")
+		glg.Errorf("[SDK] Event adapter.DoRequest status '%d' err: %s", status, err.Error())
+		return
+	}
+	glg.Info("[SDK] Poll was successfull")
 	return ml, json.Unmarshal(resp, &ml)
 }
 
@@ -88,21 +107,23 @@ func (ev *eventService) Acknowledge(events []Event) (err error) {
 	headers["Content-Type"] = "application/json"
 	headers["Cache-Control"] = "no-cache"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
-	endpoint := V3Endpoint + ":polling"
+	endpoint := V1Endpoint + "/acknowledgment"
 	_, status, err := ev.adapter.DoRequest(
-		http.MethodGet, endpoint, reader, headers)
+		http.MethodPost, endpoint, reader, headers)
 	if err != nil {
 		glg.Error("[SDK] Event adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status == http.StatusUnauthorized {
-		glg.Info("[SDK] Event AUTH error status code: ", status)
+		glg.Warn("[SDK] Event AUTH error status code: ", status)
 		err = ErrUnauthorized
 		return
 	}
 	if status != http.StatusOK {
-		glg.Info("[SDK] Event ACK status code: ", status)
+		err = errors.New("Events could not get polled")
+		glg.Errorf("[SDK] Event Acknowledge status '%d' err: %s", status, err.Error())
 		return
 	}
+	glg.Info("[SDK] Acknowledge was successfull")
 	return
 }
