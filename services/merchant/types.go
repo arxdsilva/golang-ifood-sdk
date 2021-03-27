@@ -1,7 +1,5 @@
 package merchant
 
-import "time"
-
 type (
 	Merchant struct {
 		ID      string   `json:"id"`
@@ -24,12 +22,12 @@ type (
 	Unavailabilities []Unavailability
 
 	Unavailability struct {
-		ID          string    `json:"id"`
-		Storeid     string    `json:"storeId"`
-		Description string    `json:"description"`
-		Authorid    string    `json:"authorId"`
-		Start       time.Time `json:"start"`
-		End         time.Time `json:"end"`
+		ID          string `json:"id"`
+		Storeid     string `json:"storeId"`
+		Description string `json:"description"`
+		Authorid    string `json:"authorId"`
+		Start       string `json:"start"`
+		End         string `json:"end"`
 	}
 
 	unavailability struct {
@@ -38,12 +36,12 @@ type (
 	}
 
 	UnavailabilityResponse struct {
-		ID          string    `json:"id"`
-		Storeid     string    `json:"storeId"`
-		Description string    `json:"description"`
-		Authorid    string    `json:"authorId"`
-		Start       time.Time `json:"start"`
-		End         time.Time `json:"end"`
+		ID          string `json:"id"`
+		Storeid     string `json:"storeId"`
+		Description string `json:"description"`
+		Authorid    string `json:"authorId"`
+		Start       string `json:"start"`
+		End         string `json:"end"`
 	}
 
 	AvailabilityResponse []Availability
