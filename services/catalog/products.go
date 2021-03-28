@@ -223,12 +223,12 @@ func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp
 }
 
 // EditProduct in a merchant
-func (c *catalogService) EditProduct(merchantUUID, productID string, product Product) (cp Product, err error) {
+func (c *catalogService) EditProduct(merchantUUID string, product Product) (cp Product, err error) {
 	if err = verifyCategoryItems(merchantUUID, "catalogID", "categoryID"); err != nil {
 		glg.Error("[SDK] Catalog EditProduct verifyCategoryItems: ", err.Error())
 		return
 	}
-	if productID == "" {
+	if product.ID == "" {
 		err = errors.New("productID not specified")
 		glg.Error("[SDK] Catalog EditProduct err: ", err.Error())
 		return
@@ -245,7 +245,7 @@ func (c *catalogService) EditProduct(merchantUUID, productID string, product Pro
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	headers["Content-Type"] = "application/json"
 	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
-		merchantUUID, productID)
+		merchantUUID, product.ID)
 	body, err := httpadapter.NewJsonReader(product)
 	if err != nil {
 		glg.Error("[SDK] Catalog EditProduct NewJsonReader error: ", err.Error())
@@ -258,16 +258,12 @@ func (c *catalogService) EditProduct(merchantUUID, productID string, product Pro
 	}
 	if status != http.StatusOK {
 		glg.Error("[SDK] Catalog EditProduct status code: ", status, " merchant: ", merchantUUID)
-		err = fmt.Errorf("Merchant '%s' could not edit product id '%s'", merchantUUID, productID)
+		err = fmt.Errorf("Merchant '%s' could not edit product id '%s'", merchantUUID, product.ID)
 		glg.Error("[SDK] Catalog EditProduct err: ", err)
 		return
 	}
-	if err = json.Unmarshal(resp, &cp); err != nil {
-		glg.Error("[SDK] Catalog EditProduct Unmarshal err: ", err)
-		return
-	}
-	glg.Infof("[SDK] Catalog EditProduct id '%s' success, merchant '%s'", productID, merchantUUID)
-	return
+	glg.Infof("[SDK] Catalog EditProduct id '%s' success, merchant '%s'", product.ID, merchantUUID)
+	return cp, json.Unmarshal(resp, &cp)
 }
 
 // DeleteProduct in a merchant

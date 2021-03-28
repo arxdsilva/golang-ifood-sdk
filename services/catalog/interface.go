@@ -10,7 +10,7 @@ type Service interface {
 	DeleteCategoryInCatalog(merchantUUID, catalogID, categoryID string) error
 	ListProducts(merchantUUID string) (Products, error)
 	CreateProduct(merchantUUID string, product Product) (Product, error)
-	EditProduct(merchantUUID, productID string, product Product) (Product, error)
+	EditProduct(merchantUUID string, product Product) (Product, error)
 	DeleteProduct(merchantUUID, productID string) error
 	UpdateProductStatus(merchantUUID, productID, productStatus string) error
 	LinkProductToCategory(merchantUUID, categoryID string, product ProductLink) error
