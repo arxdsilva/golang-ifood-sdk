@@ -497,9 +497,9 @@ func TestListProducts_OK(t *testing.T) {
 	am.On("Validate").Once().Return(nil)
 	am.On("GetToken").Once().Return("token")
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
-	ordersService := New(adapter, &am)
-	assert.NotNil(t, ordersService)
-	list, err := ordersService.ListProducts("merchant_id")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	list, err := catalogService.ListProducts("merchant_id")
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(list))
 	assert.Equal(t, "pizza", list[0].Name)
@@ -510,9 +510,9 @@ func TestListProducts_NoMerchantID(t *testing.T) {
 	am.On("Validate").Once().Return(nil)
 	am.On("GetToken").Once().Return("token")
 	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
-	ordersService := New(adapter, &am)
-	assert.NotNil(t, ordersService)
-	_, err := ordersService.ListProducts("")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	_, err := catalogService.ListProducts("")
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
 }
@@ -522,9 +522,9 @@ func TestListProducts_ValidateErr(t *testing.T) {
 	am.On("Validate").Once().Return(errors.New("some err"))
 	am.On("GetToken").Once().Return("token")
 	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
-	ordersService := New(adapter, &am)
-	assert.NotNil(t, ordersService)
-	_, err := ordersService.ListProducts("merchant_id")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	_, err := catalogService.ListProducts("merchant_id")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
@@ -543,9 +543,9 @@ func TestListProducts_StatusBadRequest(t *testing.T) {
 	am.On("Validate").Once().Return(nil)
 	am.On("GetToken").Once().Return("token")
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
-	ordersService := New(adapter, &am)
-	assert.NotNil(t, ordersService)
-	_, err := ordersService.ListProducts("merchant_id")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	_, err := catalogService.ListProducts("merchant_id")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "could not get all products")
 }
@@ -557,9 +557,151 @@ func TestListProducts_DoReqErr(t *testing.T) {
 	httpmock := &mocks.HttpClientMock{}
 	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
 	adapter := httpadapter.New(httpmock, "")
-	ordersService := New(adapter, &am)
-	assert.NotNil(t, ordersService)
-	_, err := ordersService.ListProducts("merchant_id")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	_, err := catalogService.ListProducts("merchant_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestCreateProduct_OK(t *testing.T) {
+	product := `{
+		"id": "12134",
+		"name": "string",
+		"description": "string",
+		"externalCode": "string",
+		"image": "string",
+		"shifts": [{}],
+		"serving": "NOT_APPLICABLE",
+		"dietaryRestrictions": [
+			"VEGETARIAN"
+		],
+		"ean": "string"
+	}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprintf(w, product)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Product{
+		Name: "nome",
+		Shifts: []Shift{
+			{
+				StartTime: "00:00",
+				EndTime:   "23:59",
+				Monday:    true,
+			},
+		},
+		Serving:             "SERVES_1",
+		DietaryRestrictions: []string{"SUGAR_FREE"},
+	}
+	productResp, err := catalogService.CreateProduct("merchant_id", p)
+	assert.Nil(t, err)
+	assert.Equal(t, "12134", productResp.ID)
+}
+
+func TestCreateProduct_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	_, err := catalogService.CreateProduct("", Product{})
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestCreateProduct_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Product{
+		Name: "nome",
+		Shifts: []Shift{
+			{
+				StartTime: "00:00",
+				EndTime:   "23:59",
+				Monday:    true,
+			},
+		},
+		Serving:             "SERVES_1",
+		DietaryRestrictions: []string{"SUGAR_FREE"},
+	}
+	_, err := catalogService.CreateProduct("merchant_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestCreateProduct_StatusBadRequest(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Product{
+		Name: "nome",
+		Shifts: []Shift{
+			{
+				StartTime: "00:00",
+				EndTime:   "23:59",
+				Monday:    true,
+			},
+		},
+		Serving:             "SERVES_1",
+		DietaryRestrictions: []string{"SUGAR_FREE"},
+	}
+	_, err := catalogService.CreateProduct("merchant_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not create product")
+}
+
+func TestCreateProduct_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Product{
+		Name: "nome",
+		Shifts: []Shift{
+			{
+				StartTime: "00:00",
+				EndTime:   "23:59",
+				Monday:    true,
+			},
+		},
+		Serving:             "SERVES_1",
+		DietaryRestrictions: []string{"SUGAR_FREE"},
+	}
+	_, err := catalogService.CreateProduct("merchant_id", p)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
