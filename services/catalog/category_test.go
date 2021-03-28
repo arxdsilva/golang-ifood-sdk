@@ -376,3 +376,89 @@ func TestEditCategoryInCatalog_DoReqErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
+
+func TestDeleteCategoryInCatalog_OK(t *testing.T) {
+	resp := `{
+		"name":"string",
+		"externalCode":"string",
+		"status":"AVAILABLE",
+		"sequence":2
+		}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.DeleteCategoryInCatalog("merchant_id", "catalog_id", "category_id")
+	assert.Nil(t, err)
+}
+
+func TestDeleteCategoryInCatalog_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.DeleteCategoryInCatalog("", "catalog_id", "category_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestDeleteCategoryInCatalog_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.DeleteCategoryInCatalog("merchant_id", "catalog_id", "category_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestDeleteCategoryInCatalog_StatusBadRequest(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.DeleteCategoryInCatalog("merchant_id", "catalog_id", "category_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not delete category")
+}
+
+func TestDeleteCategoryInCatalog_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.DeleteCategoryInCatalog("merchant_id", "catalog_id", "category_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
