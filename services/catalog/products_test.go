@@ -1,9 +1,17 @@
 package catalog
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	"github.com/arxdsilva/golang-ifood-sdk/mocks"
+	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestProduct_verifyFields_noname(t *testing.T) {
@@ -450,4 +458,108 @@ func TestPizza_verifyFields_OK(t *testing.T) {
 	}
 	err := p.verifyFields()
 	assert.Nil(t, err)
+}
+
+func TestListProducts_OK(t *testing.T) {
+	categories := `[{
+		"id": "string",
+		"name": "pizza",
+		"description": "string",
+		"externalCode": "string",
+		"image": "string",
+		"shifts": [],
+		"serving": "NOT_APPLICABLE",
+		"dietaryRestrictions": [],
+		"ean": "string"
+	},
+	{
+		"id": "string",
+		"name": "string",
+		"description": "string",
+		"externalCode": "string",
+		"image": "string",
+		"shifts": [],
+		"serving": "NOT_APPLICABLE",
+		"dietaryRestrictions": [],
+		"ean": "string"
+	}]`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprintf(w, categories)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	list, err := ordersService.ListProducts("merchant_id")
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(list))
+	assert.Equal(t, "pizza", list[0].Name)
+}
+
+func TestListProducts_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.ListProducts("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestListProducts_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.ListProducts("merchant_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestListProducts_StatusBadRequest(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.ListProducts("merchant_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not get all products")
+}
+
+func TestListProducts_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.ListProducts("merchant_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
 }
