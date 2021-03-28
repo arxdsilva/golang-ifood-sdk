@@ -1102,3 +1102,125 @@ func TestUpdateProductStatus_NoProductStatus(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "product status")
 }
+
+func TestLinkProductToCategory_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/categories/category_id/products/1234", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodPatch)
+			w.WriteHeader(http.StatusCreated)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: "AVAILABLE"}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.Nil(t, err)
+}
+
+func TestLinkProductToCategory_ErrNoProductID(t *testing.T) {
+	am := auth.AuthMock{}
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoProductID, err)
+}
+
+func TestLinkProductToCategory_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: "AVAILABLE"}
+	err := catalogService.LinkProductToCategory("", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestLinkProductToCategory_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: "AVAILABLE"}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestLinkProductToCategory_StatusBadRequest(t *testing.T) {
+	resp := `{
+		"code":"BadRequest",
+		"message":"string",
+		"details":{
+			"code":"InvalidInput",
+			"field":"string",
+			"message":"string"
+			}
+		}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/categories/category_id/products/1234", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodPatch)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: "AVAILABLE"}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not link product id")
+}
+
+func TestLinkProductToCategory_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: "AVAILABLE"}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestLinkProductToCategory_StatusErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := ProductLink{ID: "1234", Status: ""}
+	err := catalogService.LinkProductToCategory("merchant_id", "category_id", p)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "product status")
+}
