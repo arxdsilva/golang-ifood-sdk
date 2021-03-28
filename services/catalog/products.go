@@ -141,7 +141,7 @@ func (p *Pizza) verifyFields() (err error) {
 			return ErrToppingNameNotSpecified
 		}
 		if (topping.Status != "AVAILABLE") && (topping.Status != "UNAVAILABLE") {
-			return ErrInvalidPizzaEdgeStatus
+			return ErrInvalidPizzaToppingStatus
 		}
 	}
 	for _, shift := range p.Shifts {
