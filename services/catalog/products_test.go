@@ -1313,3 +1313,34 @@ func TestUnlinkProductToCategory_DoReqErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
+
+func TestListPizzas_OK(t *testing.T) {
+	resp := `[{
+		"id": "string",
+		"sizes": [],
+		"crusts": [],
+		"edges": [],
+		"toppings": [],
+		"shifts": []
+	}]`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/pizzas", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	pzs, err := catalogService.ListPizzas("merchant_id")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(pzs))
+}

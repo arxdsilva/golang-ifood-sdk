@@ -503,18 +503,14 @@ func (c *catalogService) ListPizzas(merchantUUID string) (pz Pizzas, err error) 
 		glg.Error("[SDK] Catalog ListPizzas adapter.DoRequest: ", err.Error())
 		return
 	}
-	if status != http.StatusCreated {
+	if status != http.StatusOK {
 		glg.Error("[SDK] Catalog ListPizzas status code: ", status, " merchant: ", merchantUUID)
 		err = fmt.Errorf("Merchant '%s' could not list pizzas", merchantUUID)
 		glg.Error("[SDK] Catalog ListPizzas err: ", err)
 		return
 	}
-	if err = json.Unmarshal(resp, &pz); err != nil {
-		glg.Errorf("[SDK] Catalog ListPizzas merchant '%s' Unmarshal err: %s", merchantUUID, err.Error())
-		return
-	}
 	glg.Infof("[SDK] List pizzas merchant '%s' success", merchantUUID)
-	return
+	return pz, json.Unmarshal(resp, &pz)
 }
 
 // UpdatePizza in a merchant
