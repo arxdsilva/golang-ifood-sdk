@@ -1,7 +1,7 @@
 package catalog
 
 type Service interface {
-	ListAll(merchantID string) (Catalogs, error)
+	ListAllV2(merchantID string) (Catalogs, error)
 	ListUnsellableItems(merchantUUID, catalogID string) (UnsellableResponse, error)
 	ListAllCategoriesInCatalog(merchantUUID, catalogID string) (CategoryResponse, error)
 	CreateCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, template, externalCode string) (CategoryCreateResponse, error)

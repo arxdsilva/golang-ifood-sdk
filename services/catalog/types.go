@@ -6,7 +6,7 @@ type (
 		ID         string   `json:"catalogId"`
 		Context    []string `json:"context"`
 		Status     string   `json:"status"`
-		ModifiedAt float64  `json:"modifiedAt"`
+		ModifiedAt string   `json:"modifiedAt"`
 	}
 
 	UnsellableResponse struct {

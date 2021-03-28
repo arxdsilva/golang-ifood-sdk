@@ -26,7 +26,7 @@ func New(adapter adapters.Http, authService auth.Service) *catalogService {
 }
 
 // ListAll catalogs from a Merchant
-func (c *catalogService) ListAll(merchantUUID string) (ct Catalogs, err error) {
+func (c *catalogService) ListAllV2(merchantUUID string) (ct Catalogs, err error) {
 	if merchantUUID == "" {
 		err = ErrMerchantNotSpecified
 		glg.Error("[SDK] Catalog ListAll: ", err.Error())
