@@ -476,12 +476,8 @@ func (c *catalogService) CreatePizza(merchantUUID string, pizza Pizza) (cp Pizza
 		glg.Error("[SDK] Catalog CreatePizza err: ", err)
 		return
 	}
-	if err = json.Unmarshal(resp, &cp); err != nil {
-		glg.Error("[SDK] Catalog CreatePizza Unmarshal err: ", err)
-		return
-	}
 	glg.Infof("[SDK] Create pizza id '%s' success, merchant '%s'", cp.ID, merchantUUID)
-	return
+	return cp, json.Unmarshal(resp, &cp)
 }
 
 // ListPizzas in a merchant
