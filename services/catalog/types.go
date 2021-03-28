@@ -87,12 +87,12 @@ type (
 	}
 
 	CategoryCreateResponse struct {
-		ID           string  `json:"id"`
-		Name         string  `json:"name"`
-		ExternalCode string  `json:"externalCode"`
-		Status       string  `json:"status"`
-		Sequence     float64 `json:"sequence"`
-		Template     string  `json:"template"`
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		ExternalCode string `json:"externalCode"`
+		Status       string `json:"status"`
+		Sequence     int    `json:"sequence"`
+		Template     string `json:"template"`
 	}
 
 	Price struct {
