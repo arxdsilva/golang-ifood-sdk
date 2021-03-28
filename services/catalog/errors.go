@@ -30,4 +30,5 @@ var (
 	ErrNoAcceptedFractions = errors.New("Pizza needs at least one accepted fraction")
 
 	ErrNoProductName = errors.New("Product needs a name")
+	ErrNoProductID   = errors.New("productID not specified")
 )

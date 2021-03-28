@@ -229,7 +229,7 @@ func (c *catalogService) EditProduct(merchantUUID string, product Product) (cp P
 		return
 	}
 	if product.ID == "" {
-		err = errors.New("productID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog EditProduct err: ", err.Error())
 		return
 	}
