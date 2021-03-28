@@ -1440,3 +1440,24 @@ func TestUpdatePizza_OK(t *testing.T) {
 	err := catalogService.UpdatePizza("merchant_id", p)
 	assert.Nil(t, err)
 }
+
+func TestUpdatePizzaStatus_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/pizzas/1234", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodPatch)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UpdatePizzaStatus("merchant_id", "AVAILABLE", "1234")
+	assert.Nil(t, err)
+}
