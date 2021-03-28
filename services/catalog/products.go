@@ -286,14 +286,24 @@ func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err erro
 	headers["Content-Type"] = "application/json"
 	endpoint := v2Endpoint + fmt.Sprintf("/merchants/%s/products/%s",
 		merchantUUID, productID)
-	_, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	resp, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog DeleteProduct adapter.DoRequest: ", err.Error())
 		return
 	}
 	if status >= http.StatusBadRequest {
-		glg.Error("[SDK] Catalog DeleteProduct status code: ", status, " merchant: ", merchantUUID)
-		err = fmt.Errorf("Merchant '%s' could not delete product id '%s'", merchantUUID, productID)
+		badResp := &struct {
+			Details struct {
+				Code string `json:"code"`
+			} `json:"details"`
+		}{}
+		err = json.Unmarshal(resp, badResp)
+		if err != nil {
+			glg.Error("[SDK] Catalog DeleteProduct Unmarshal: ", err)
+			return
+		}
+		glg.Error("[SDK] Catalog DeleteProduct status code: ", status, " merchant: ", merchantUUID, " detail: ", badResp.Details.Code)
+		err = fmt.Errorf("Merchant '%s' could not delete product id '%s', code: '%s'", merchantUUID, productID, badResp.Details.Code)
 		glg.Error("[SDK] Catalog DeleteProduct err: ", err)
 		return
 	}

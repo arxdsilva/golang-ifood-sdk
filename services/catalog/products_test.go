@@ -886,3 +886,104 @@ func TestEditProduct_DoReqErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
+
+func TestDeleteProduct_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products/product_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("merchant_id", "product_id")
+	assert.Nil(t, err)
+}
+
+func TestDeleteProduct_ErrNoProductID(t *testing.T) {
+	am := auth.AuthMock{}
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("merchant_id", "")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoProductID, err)
+}
+
+func TestDeleteProduct_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("", "product_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestDeleteProduct_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("merchant_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestDeleteProduct_StatusBadRequest(t *testing.T) {
+	resp := `{
+		"code":"BadRequest",
+		"message":"string",
+		"details":{
+			"code":"InvalidInput",
+			"field":"string",
+			"message":"string"
+			}
+		}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/products/product_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("merchant_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not delete product")
+}
+
+func TestDeleteProduct_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteProduct("merchant_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
