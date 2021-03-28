@@ -1392,3 +1392,51 @@ func TestCreatePizza_OK(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "1234", pizza.ID)
 }
+
+func TestUpdatePizza_OK(t *testing.T) {
+	resp := `{
+		"id": "1234",
+		"sizes": [{}],
+		"crusts": [{}],
+		"edges": [{}],
+		"toppings": [{}],
+		"shifts": [{}]
+	}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/pizzas/1234", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
+			assert.Equal(t, r.Method, http.MethodPut)
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Pizza{
+		ID: "1234",
+		Sizes: []CategoryItem{
+			{Name: "id", Status: "AVAILABLE", AcceptedFractions: []float64{1}},
+		},
+		Crusts: []CategoryItem{
+			{Name: "crust", Status: "AVAILABLE"},
+		},
+		Edges: []CategoryItem{
+			{Name: "edge", Status: "AVAILABLE"},
+		},
+		Toppings: []CategoryItem{
+			{Name: "topping", Status: "AVAILABLE"},
+		},
+		Shifts: []Shift{
+			{StartTime: "start", EndTime: "end"},
+		},
+	}
+	err := catalogService.UpdatePizza("merchant_id", p)
+	assert.Nil(t, err)
+}
