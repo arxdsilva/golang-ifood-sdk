@@ -28,4 +28,6 @@ var (
 	ErrInvalidPizzaToppingStatus = errors.New("INVALID Pizza topping status, it should be 'AVAILABLE' or 'UNAVAILABLE'")
 
 	ErrNoAcceptedFractions = errors.New("Pizza needs at least one accepted fraction")
+
+	ErrNoProductName = errors.New("Product needs a name")
 )

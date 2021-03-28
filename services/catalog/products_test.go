@@ -611,6 +611,17 @@ func TestCreateProduct_OK(t *testing.T) {
 	assert.Equal(t, "12134", productResp.ID)
 }
 
+func TestCreateProduct_verifyProductErr(t *testing.T) {
+	am := auth.AuthMock{}
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	p := Product{}
+	_, err := catalogService.CreateProduct("merchant_id", p)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoProductName, err)
+}
+
 func TestCreateProduct_NoMerchantID(t *testing.T) {
 	am := auth.AuthMock{}
 	am.On("Validate").Once().Return(nil)

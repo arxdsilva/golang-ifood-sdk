@@ -50,7 +50,7 @@ type (
 
 func (p *Product) verifyFields() (err error) {
 	if p.Name == "" {
-		return errors.New("Product needs a name")
+		return ErrNoProductName
 	}
 	if len(p.Name) > 65 {
 		return errors.New("Name len is higher than 65 characters")
@@ -218,12 +218,8 @@ func (c *catalogService) CreateProduct(merchantUUID string, product Product) (cp
 		glg.Error("[SDK] Catalog CreateProduct err: ", err)
 		return
 	}
-	if err = json.Unmarshal(resp, &cp); err != nil {
-		glg.Error("[SDK] Catalog CreateProduct Unmarshal err: ", err)
-		return
-	}
 	glg.Infof("[SDK] Create product id '%s' success, merchant '%s'", cp.ID, merchantUUID)
-	return
+	return cp, json.Unmarshal(resp, &cp)
 }
 
 // EditProduct in a merchant
