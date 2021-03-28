@@ -82,7 +82,7 @@ type (
 		Template            string    `json:"template"`
 		AcceptedFractions   []float64 `json:"acceptedFractions"`
 		DietaryRestrictions []string  `json:"dietaryRestrictions"`
-		Sequence            float64   `json:"sequence"`
+		Sequence            int       `json:"sequence"`
 		Price               Price     `json:"price"`
 	}
 

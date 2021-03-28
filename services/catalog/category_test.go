@@ -60,6 +60,7 @@ func TestListAllCategoriesInCatalog_NoMerchantID(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
 }
+
 func TestListAllCategoriesInCatalog_ValidateErr(t *testing.T) {
 	am := auth.AuthMock{}
 	am.On("Validate").Once().Return(errors.New("some err"))
@@ -102,7 +103,7 @@ func TestListAllCategoriesInCatalog_DoReqErr(t *testing.T) {
 	adapter := httpadapter.New(httpmock, "")
 	ordersService := New(adapter, &am)
 	assert.NotNil(t, ordersService)
-	_, err := ordersService.ListAllCategoriesInCatalog("reference_id", "catalog_id")
+	_, err := ordersService.ListAllCategoriesInCatalog("merchant_id", "catalog_id")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
@@ -148,6 +149,7 @@ func TestCreateCategoryInCatalog_NoMerchantID(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
 }
+
 func TestCreateCategoryInCatalog_ValidateErr(t *testing.T) {
 	am := auth.AuthMock{}
 	am.On("Validate").Once().Return(errors.New("some err"))
@@ -190,7 +192,7 @@ func TestCreateCategoryInCatalog_DoReqErr(t *testing.T) {
 	adapter := httpadapter.New(httpmock, "")
 	ordersService := New(adapter, &am)
 	assert.NotNil(t, ordersService)
-	_, err := ordersService.CreateCategoryInCatalog("reference_id", "catalog_id", "name", "AVAILABLE", "DEFAULT", "")
+	_, err := ordersService.CreateCategoryInCatalog("merchant_id", "catalog_id", "name", "AVAILABLE", "DEFAULT", "")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
@@ -210,7 +212,7 @@ func TestGetCategoryInCatalog_OK(t *testing.T) {
 	}`
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/catalog_id", r.URL.Path)
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
 			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
 			assert.Equal(t, r.Method, http.MethodGet)
 			w.WriteHeader(http.StatusOK)
@@ -240,6 +242,7 @@ func TestGetCategoryInCatalog_NoMerchantID(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrMerchantNotSpecified, err)
 }
+
 func TestGetCategoryInCatalog_ValidateErr(t *testing.T) {
 	am := auth.AuthMock{}
 	am.On("Validate").Once().Return(errors.New("some err"))
@@ -255,7 +258,7 @@ func TestGetCategoryInCatalog_ValidateErr(t *testing.T) {
 func TestGetCategoryInCatalog_StatusBadRequest(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/catalog_id", r.URL.Path)
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
 			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
 			assert.Equal(t, r.Method, http.MethodGet)
 			w.WriteHeader(http.StatusBadRequest)
@@ -282,7 +285,94 @@ func TestGetCategoryInCatalog_DoReqErr(t *testing.T) {
 	adapter := httpadapter.New(httpmock, "")
 	ordersService := New(adapter, &am)
 	assert.NotNil(t, ordersService)
-	_, err := ordersService.GetCategoryInCatalog("reference_id", "catalog_id", "category_id")
+	_, err := ordersService.GetCategoryInCatalog("merchant_id", "catalog_id", "category_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestEditCategoryInCatalog_OK(t *testing.T) {
+	resp := `{
+		"name":"string",
+		"externalCode":"string",
+		"status":"AVAILABLE",
+		"sequence":2
+		}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodPatch)
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	category, err := ordersService.EditCategoryInCatalog("merchant_id", "catalog_id", "category_id", "name", "AVAILABLE", "code", 2)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, category.Sequence)
+}
+
+func TestEditCategoryInCatalog_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.EditCategoryInCatalog("", "catalog_id", "category_id", "name", "AVAILABLE", "code", 2)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestEditCategoryInCatalog_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.EditCategoryInCatalog("merchant_id", "catalog_id", "category_id", "name", "AVAILABLE", "code", 2)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestEditCategoryInCatalog_StatusBadRequest(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/catalogs/catalog_id/categories/category_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodPatch)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.EditCategoryInCatalog("merchant_id", "catalog_id", "category_id", "name", "AVAILABLE", "code", 2)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not edit category")
+}
+
+func TestEditCategoryInCatalog_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.EditCategoryInCatalog("merchant_id", "catalog_id", "category_id", "name", "AVAILABLE", "code", 2)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }

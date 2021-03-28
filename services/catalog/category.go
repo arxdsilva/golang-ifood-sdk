@@ -99,7 +99,7 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
 	endpoint := v2Endpoint + fmt.Sprintf(
-		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, catalogID)
+		"/merchants/%s/catalogs/%s/categories/%s", merchantUUID, catalogID, categoryID)
 	resp, status, err := c.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Catalog GetCategoryInCatalog adapter.DoRequest: ", err.Error())
@@ -120,7 +120,7 @@ func (c *catalogService) GetCategoryInCatalog(merchantUUID, catalogID, categoryI
 // EditCategoryInCatalog changes a category in a specified catalog
 //
 // resource status = [AVAILABLE || UNAVAILABLE]
-func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence float64) (cr CategoryCreateResponse, err error) {
+func (c *catalogService) EditCategoryInCatalog(merchantUUID, catalogID, categoryID, name, resourceStatus, externalCode string, sequence int) (cr CategoryCreateResponse, err error) {
 	err = verifyNewCategoryInCatalog(merchantUUID, catalogID, name, resourceStatus, "DEFAULT")
 	if err != nil {
 		glg.Error("[SDK] Catalog EditCategoryInCatalog verifyNewCategoryInCatalog: ", err.Error())
