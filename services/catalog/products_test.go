@@ -1224,3 +1224,92 @@ func TestLinkProductToCategory_StatusErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "product status")
 }
+
+func TestUnlinkProductToCategory_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/categories/category_id/products/product_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("merchant_id", "category_id", "product_id")
+	assert.Nil(t, err)
+}
+
+func TestUnlinkProductToCategory_ErrNoProductID(t *testing.T) {
+	am := auth.AuthMock{}
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("merchant_id", "category_id", "")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoProductID, err)
+}
+
+func TestUnlinkProductToCategory_NoMerchantID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("", "category_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrMerchantNotSpecified, err)
+}
+
+func TestUnlinkProductToCategory_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("merchant_id", "category_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func TestUnlinkProductToCategory_StatusBadRequest(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/categories/category_id/products/product_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusBadRequest)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("merchant_id", "category_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "could not unlink product id")
+}
+
+func TestUnlinkProductToCategory_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkProductToCategory("merchant_id", "category_id", "product_id")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}

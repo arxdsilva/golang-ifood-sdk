@@ -412,6 +412,11 @@ func (c *catalogService) UnlinkProductToCategory(merchantUUID, categoryID, produ
 		glg.Error("[SDK] Catalog UnlinkProductToCategory verifyCategoryItems: ", err.Error())
 		return
 	}
+	if productID == "" {
+		err = ErrNoProductID
+		glg.Error("[SDK] Catalog UnlinkProductToCategory err: ", err.Error())
+		return
+	}
 	if err = c.auth.Validate(); err != nil {
 		glg.Error("[SDK] Catalog UnlinkProductToCategory auth.Validate: ", err.Error())
 		return
