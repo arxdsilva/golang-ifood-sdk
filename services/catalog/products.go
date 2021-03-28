@@ -273,7 +273,7 @@ func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err erro
 		return
 	}
 	if productID == "" {
-		err = errors.New("productID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog DeleteProduct err: ", err.Error())
 		return
 	}
@@ -308,7 +308,7 @@ func (c *catalogService) UpdateProductStatus(merchantUUID, productID, productSta
 		return
 	}
 	if productID == "" {
-		err = errors.New("productID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog UpdateProductStatus err: ", err.Error())
 		return
 	}
@@ -356,7 +356,7 @@ func (c *catalogService) LinkProductToCategory(merchantUUID, categoryID string, 
 		return
 	}
 	if product.ID == "" {
-		err = errors.New("productID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog LinkProductToCategory err: ", err.Error())
 		return
 	}
@@ -509,7 +509,7 @@ func (c *catalogService) UpdatePizza(merchantUUID string, pizza Pizza) (err erro
 		return
 	}
 	if pizza.ID == "" {
-		err = errors.New("Pizza ID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog UpdatePizza verifyFields: ", err.Error(), " merchant ", merchantUUID)
 		return
 	}
@@ -550,12 +550,12 @@ func (c *catalogService) UpdatePizzaStatus(merchantUUID, pizzaStatus, pizzaID st
 		return
 	}
 	if pizzaID == "" {
-		err = errors.New("Pizza ID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog UpdatePizzaStatus verifyFields: ", err.Error(), " merchant ", merchantUUID)
 		return
 	}
 	if (pizzaStatus != "AVAILABLE") && (pizzaStatus != "UNAVAILABLE") {
-		err = errors.New("Pizza ID not specified")
+		err = fmt.Errorf("pizza status '%s' should be 'AVAILABLE' or 'UNAVAILABLE'", pizzaStatus)
 		glg.Error("[SDK] Catalog UpdatePizzaStatus verifyFields: ", err.Error(), " merchant ", merchantUUID)
 		return
 	}
@@ -597,7 +597,7 @@ func (c *catalogService) LinkPizzaToCategory(merchantUUID, categoryID string, pi
 		return
 	}
 	if pizza.ID == "" {
-		err = errors.New("Pizza ID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog LinkPizzaToCategory verifyFields: ", err.Error(), " merchant ", merchantUUID)
 		return
 	}
@@ -638,7 +638,7 @@ func (c *catalogService) UnlinkPizzaCategory(merchantUUID, pizzaID, categoryID s
 		return
 	}
 	if pizzaID == "" {
-		err = errors.New("Pizza ID not specified")
+		err = ErrNoProductID
 		glg.Error("[SDK] Catalog UnlinkPizzaCategory verifyFields: ", err.Error(), " merchant ", merchantUUID)
 		return
 	}
