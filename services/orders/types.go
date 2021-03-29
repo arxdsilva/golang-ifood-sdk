@@ -81,7 +81,7 @@ type (
 		Observations  string    `json:"observations,omitempty"`
 	}
 
-	// Subitems of the order
+	// Subitem of the order
 	Subitem struct {
 		Name         string `json:"name"`
 		Quantity     string `json:"quantity"`

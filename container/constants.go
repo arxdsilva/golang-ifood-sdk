@@ -1,9 +1,11 @@
 package container
 
 const (
-	// EnvProduction and other dev envs
+	// EnvProduction is the production env
 	EnvProduction = iota
+	// EnvDevelopment is the dev env
 	EnvDevelopment
+	// EnvSandBox is the local/sandbox env
 	EnvSandBox
 
 	urlProduction = "https://pos-api.ifood.com.br"

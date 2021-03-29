@@ -20,6 +20,8 @@ const (
 
 // ErrUnauthorized api error
 var ErrUnauthorized = errors.New("Unauthorized request")
+
+// ErrReqLimitExceeded API query limit exceeded
 var ErrReqLimitExceeded = errors.New("EVENTS POLL REQUEST LIMIT EXCEEDED")
 
 type (

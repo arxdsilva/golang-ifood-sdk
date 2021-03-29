@@ -13,7 +13,8 @@ import (
 type (
 	// Products are many product
 	Products []Product
-	// Products API response
+
+	// Product API response
 	Product struct {
 		ID                  string   `json:"id"`
 		Name                string   `json:"name"`

@@ -24,7 +24,9 @@ type httpAdapter struct {
 }
 
 var (
+	// ErrorNilData no data
 	ErrorNilData = errors.New("No data to parse ")
+	// ErrorNilAuth no auth service
 	ErrorNilAuth = errors.New("No auth to parse ")
 )
 

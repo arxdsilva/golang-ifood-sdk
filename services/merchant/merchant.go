@@ -19,11 +19,13 @@ const (
 
 var (
 	// ErrMerchantNotSpecified no merchant
-	ErrMerchantNotSpecified                   = errors.New("merchant not specified")
+	ErrMerchantNotSpecified = errors.New("merchant not specified")
+	// ErrMerchantORUnavailabilityIDNotSpecified no merchant or unavailability
 	ErrMerchantORUnavailabilityIDNotSpecified = errors.New("merchant or unavailability not specified")
 )
 
 type (
+	// Service describes the merchant API abstraction
 	Service interface {
 		ListAll() ([]Merchant, error)
 		Unavailabilities(merchantUUID string) (Unavailabilities, error)
@@ -38,6 +40,7 @@ type (
 	}
 )
 
+// New returns a new merchant service
 func New(adapter adapters.Http, authService auth.Service) *merchantService {
 	return &merchantService{adapter, authService}
 }

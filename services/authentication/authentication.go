@@ -17,6 +17,7 @@ const (
 	valueGrantType = "password"
 )
 
+// ErrUnauthorized API no auth error
 var ErrUnauthorized = errors.New("Unauthorized")
 
 type (
