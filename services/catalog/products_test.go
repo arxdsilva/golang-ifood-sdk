@@ -1477,7 +1477,7 @@ func TestLinkPizzaToCategory_OK(t *testing.T) {
 			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
 			assert.Equal(t, "application/json", r.Header["Content-Type"][0])
 			assert.Equal(t, r.Method, http.MethodPost)
-			w.WriteHeader(http.StatusCreated)
+			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, resp)
 		}),
 	)
@@ -1507,5 +1507,25 @@ func TestLinkPizzaToCategory_OK(t *testing.T) {
 		},
 	}
 	err := catalogService.LinkPizzaToCategory("merchant_id", "category_id", p)
+	assert.Nil(t, err)
+}
+
+func TestUnlinkPizzaCategory_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/pizzas/pizza_id/categories/category_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.UnlinkPizzaCategory("merchant_id", "pizza_id", "category_id")
 	assert.Nil(t, err)
 }
