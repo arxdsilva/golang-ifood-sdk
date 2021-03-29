@@ -292,11 +292,7 @@ func (c *catalogService) DeleteProduct(merchantUUID, productID string) (err erro
 		return
 	}
 	if status >= http.StatusBadRequest {
-		badResp := &struct {
-			Details struct {
-				Code string `json:"code"`
-			} `json:"details"`
-		}{}
+		badResp := &apiError{}
 		err = json.Unmarshal(resp, badResp)
 		if err != nil {
 			glg.Error("[SDK] Catalog DeleteProduct Unmarshal: ", err)

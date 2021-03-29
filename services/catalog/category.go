@@ -195,3 +195,20 @@ func (c *catalogService) DeleteCategoryInCatalog(merchantUUID, catalogID, catego
 	glg.Info("[SDK] Delete product success")
 	return
 }
+
+func (c *CategoryItem) verify() (err error) {
+	empty := Price{}
+	if c.Price == empty {
+		return ErrNoPrice
+	}
+	if c.Price.Value == 0 {
+		return ErrNoItemPrice
+	}
+	if (c.Status != "AVAILABLE") && (c.Status != "UNAVAILABLE") {
+		return ErrInvalidStatus
+	}
+	if len(c.Shifts) == 0 {
+		return ErrNoShifts
+	}
+	return
+}

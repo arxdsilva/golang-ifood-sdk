@@ -31,4 +31,8 @@ var (
 
 	ErrNoProductName = errors.New("Product needs a name")
 	ErrNoProductID   = errors.New("productID not specified")
+	ErrNoItemPrice   = errors.New("item needs the price value to be specified")
+	ErrNoPrice       = errors.New("item needs the price struct filled")
+	ErrInvalidStatus = errors.New("INVALID status, it should be 'AVAILABLE' or 'UNAVAILABLE'")
+	ErrNoShifts      = errors.New("Item needs at least one shift")
 )

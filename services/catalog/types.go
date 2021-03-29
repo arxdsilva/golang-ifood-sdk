@@ -84,6 +84,7 @@ type (
 		DietaryRestrictions []string  `json:"dietaryRestrictions"`
 		Sequence            int       `json:"sequence"`
 		Price               Price     `json:"price"`
+		Shifts              []Shift   `json:"shifts"`
 	}
 
 	CategoryCreateResponse struct {
@@ -110,5 +111,11 @@ type (
 		Friday    bool   `json:"friday"`
 		Saturday  bool   `json:"saturday"`
 		Sunday    bool   `json:"sunday"`
+	}
+
+	apiError struct {
+		Details struct {
+			Code string `json:"code"`
+		} `json:"details"`
 	}
 )
