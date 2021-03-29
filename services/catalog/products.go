@@ -11,8 +11,10 @@ import (
 )
 
 type (
+	// Products are many product
 	Products []Product
-	Product  struct {
+	// Products API response
+	Product struct {
 		ID                  string   `json:"id"`
 		Name                string   `json:"name"`
 		Description         string   `json:"description"`
@@ -23,6 +25,8 @@ type (
 		DietaryRestrictions []string `json:"dietaryRestrictions"`
 		Ean                 string   `json:"ean"`
 	}
+
+	// ProductLink API response
 	ProductLink struct {
 		Status              string   `json:"status"`
 		ID                  string   `json:"id"`
@@ -38,8 +42,11 @@ type (
 		Ean                 string   `json:"ean"`
 	}
 
+	// Pizzas is a group of pizza
 	Pizzas []Pizza
-	Pizza  struct {
+
+	// Pizza type requested by the API
+	Pizza struct {
 		ID       string         `json:"id"`
 		Sizes    []CategoryItem `json:"sizes"`
 		Crusts   []CategoryItem `json:"crusts"`

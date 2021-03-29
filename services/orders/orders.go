@@ -12,12 +12,13 @@ import (
 )
 
 const (
-	V1Endpoint = "/v1.0/orders"
-	V2Endpoint = "/v2.0/orders"
-	V3Endpoint = "/v3.0/orders"
+	v1Endpoint = "/v1.0/orders"
+	v2Endpoint = "/v2.0/orders"
+	v3Endpoint = "/v3.0/orders"
 )
 
 var (
+	// CancelCodes are all valid iFood API cancellation codes
 	CancelCodes = map[string]string{
 		"501": "PROBLEMAS DE SISTEMA",
 		"502": "PEDIDO EM DUPLICIDADE",
@@ -45,6 +46,7 @@ var (
 )
 
 type (
+	// Service determinates the order's interface
 	Service interface {
 		GetDetails(reference string) (OrderDetails, error)
 		SetIntegrateStatus(reference string) error
@@ -63,6 +65,7 @@ type (
 	}
 )
 
+// New returns a new order service
 func New(adapter adapters.Http, authService auth.Service) *ordersService {
 	return &ordersService{adapter, authService}
 }
@@ -80,7 +83,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s", V3Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s", v3Endpoint, orderReference)
 	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders GetDetails adapter.DoRequest error: ", err.Error())
@@ -108,7 +111,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/integration", V1Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/integration", v1Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders SetIntegrateStatus adapter.DoRequest error: ", err.Error())
@@ -136,7 +139,7 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/confirmation", V1Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/confirmation", v1Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders SetConfirmStatus adapter.DoRequest error: ", err.Error())
@@ -164,7 +167,7 @@ func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/dispatch", V1Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/dispatch", v1Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders SetDispatchStatus adapter.DoRequest error: ", err.Error())
@@ -192,7 +195,7 @@ func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err erro
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/readyToDeliver", V2Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/readyToDeliver", v2Endpoint, orderReference)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders SetReadyToDeliverStatus adapter.DoRequest error: ", err.Error())
@@ -219,7 +222,7 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/cancellationRequested", V3Endpoint, orderReference)
+	endpoint := fmt.Sprintf("%s/%s/statuses/cancellationRequested", v3Endpoint, orderReference)
 	detail := CancelCodes[code]
 	co := cancelOrder{Code: code, Details: detail}
 	reader, err := httpadapter.NewJsonReader(co)
@@ -265,7 +268,7 @@ func (o *ordersService) ClientCancellationStatus(orderReference string, accepted
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/statuses/%s", V2Endpoint, orderReference, cancelStatus)
+	endpoint := fmt.Sprintf("%s/%s/statuses/%s", v2Endpoint, orderReference, cancelStatus)
 	_, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders ClientCancellationStatus adapter.DoRequest error: ", err.Error())
@@ -295,7 +298,7 @@ func (o *ordersService) Tracking(orderUUID string) (tr TrackingResponse, err err
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/tracking", V2Endpoint, orderUUID)
+	endpoint := fmt.Sprintf("%s/%s/tracking", v2Endpoint, orderUUID)
 	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders Tracking adapter.DoRequest error: ", err.Error())
@@ -323,7 +326,7 @@ func (o *ordersService) DeliveryInformation(orderUUID string) (di DeliveryInform
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/delivery-information", V2Endpoint, orderUUID)
+	endpoint := fmt.Sprintf("%s/%s/delivery-information", v2Endpoint, orderUUID)
 	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Orders DeliveryInformation adapter.DoRequest error: ", err.Error())

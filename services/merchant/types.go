@@ -1,6 +1,7 @@
 package merchant
 
 type (
+	// Merchant API response
 	Merchant struct {
 		ID      string   `json:"id"`
 		Name    string   `json:"name"`
@@ -8,6 +9,7 @@ type (
 		Address Address  `json:"address"`
 	}
 
+	// Address in a merchant
 	Address struct {
 		Formattedaddress string `json:"formattedAddress"`
 		Country          string `json:"country"`
@@ -19,8 +21,10 @@ type (
 		Postalcode       string `json:"postalCode"`
 	}
 
+	// Unavailabilities group of Unavailability
 	Unavailabilities []Unavailability
 
+	// Unavailability API response
 	Unavailability struct {
 		ID          string `json:"id"`
 		Storeid     string `json:"storeId"`
@@ -35,6 +39,7 @@ type (
 		Minutes     int32  `json:"minutes"`
 	}
 
+	// UnavailabilityResponse API response
 	UnavailabilityResponse struct {
 		ID          string `json:"id"`
 		Storeid     string `json:"storeId"`
@@ -44,8 +49,11 @@ type (
 		End         string `json:"end"`
 	}
 
+	// AvailabilityResponse group of Availability
 	AvailabilityResponse []Availability
-	Availability         struct {
+
+	// Availability struct to API validate
+	Availability struct {
 		Context    string `json:"context"`
 		Available  bool   `json:"available"`
 		State      string `json:"state"`

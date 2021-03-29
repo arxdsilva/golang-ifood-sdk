@@ -15,6 +15,7 @@ import (
 	"github.com/kpango/glg"
 )
 
+// Container is the SDK abstractions holder to facilitate the API manipulation
 type Container struct {
 	env             int
 	timeout         time.Duration
@@ -26,10 +27,12 @@ type Container struct {
 	OrdersService   orders.Service
 }
 
+// New returns a new container
 func New(env int, timeout time.Duration) *Container {
 	return &Container{env: env, timeout: timeout}
 }
 
+// GetHttpAdapter returns new HTTP adapter according to the env
 func (c *Container) GetHttpAdapter() adapters.Http {
 	if c.httpadapter != nil {
 		return c.httpadapter
@@ -50,6 +53,7 @@ func (c *Container) GetHttpAdapter() adapters.Http {
 
 // Do a start method to instantiate all services instead of each separated
 
+// GetAuthenticationService instantiates an auth service, also adds it to the container
 func (c *Container) GetAuthenticationService(clientId, clientSecret string) authentication.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetAuthenticationService]: http adapter is nil, please set it with Container.GetHttpAdapter")
@@ -61,6 +65,7 @@ func (c *Container) GetAuthenticationService(clientId, clientSecret string) auth
 	return c.AuthService
 }
 
+// GetMerchantService instantiates an merchant service, also adds it to the container
 func (c *Container) GetMerchantService() merchant.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetMerchantService]: http adapter is nil, please set it with Container.GetHttpAdapter")
@@ -76,6 +81,7 @@ func (c *Container) GetMerchantService() merchant.Service {
 	return c.MerchantService
 }
 
+// GetCatalogService instantiates an catalog service, also adds it to the container
 func (c *Container) GetCatalogService() catalog.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetCatalogService]: http adapter is nil, please set it with Container.GetHttpAdapter")
@@ -91,6 +97,7 @@ func (c *Container) GetCatalogService() catalog.Service {
 	return c.CatalogService
 }
 
+// GetEventsService instantiates an events service, also adds it to the container
 func (c *Container) GetEventsService() events.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetEventsService]: http adapter is nil, please set it with Container.GetHttpAdapter")
@@ -106,6 +113,7 @@ func (c *Container) GetEventsService() events.Service {
 	return c.EventsService
 }
 
+// GetOrdersService instantiates an orders service, also adds it to the container
 func (c *Container) GetOrdersService() orders.Service {
 	if c.httpadapter == nil {
 		glg.Warn("[GetOrdersService]: http adapter is nil, please set it with Container.GetHttpAdapter")

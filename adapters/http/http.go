@@ -13,6 +13,7 @@ import (
 	"github.com/kpango/glg"
 )
 
+// HTTPClient implementation
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -27,10 +28,12 @@ var (
 	ErrorNilAuth = errors.New("No auth to parse ")
 )
 
+// New returns an httpAdapter
 func New(client HTTPClient, baseUrl string) *httpAdapter {
 	return &httpAdapter{client, baseUrl}
 }
 
+// DoRequest is the httpAdapter requester
 func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers map[string]string) ([]byte, int, error) {
 	request, err := http.NewRequest(method, h.baseUrl+path, reader)
 	if err != nil {
@@ -48,6 +51,7 @@ func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers m
 	return result, resp.StatusCode, err
 }
 
+// NewJsonReader returns a reader from a given data
 func NewJsonReader(data interface{}) (io.Reader, error) {
 	if data == nil {
 		return nil, ErrorNilData
@@ -60,6 +64,7 @@ func NewJsonReader(data interface{}) (io.Reader, error) {
 	return bytes.NewReader(jsonData), nil
 }
 
+// NewMultipartReader returns a multipart reader from a given data
 func NewMultipartReader(data interface{}) (reader io.Reader, boundary string, err error) {
 	if data == nil {
 		err = ErrorNilData

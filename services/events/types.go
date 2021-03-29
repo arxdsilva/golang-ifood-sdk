@@ -1,5 +1,6 @@
 package events
 
+// ValidEventsByCodeName API events by code:name
 var ValidEventsByCodeName = map[string]string{
 	"COL": "PLACED",
 	"REC": "INTEGRATED",
@@ -37,6 +38,7 @@ var ValidEventsByCodeName = map[string]string{
 	"RPS": "RECOMMENDED_PREPARATION_START",
 }
 
+// ValidEventsByNameCode API events by name:code
 var ValidEventsByNameCode = map[string]string{
 	"PLACED":                          "COL",
 	"INTEGRATED":                      "REC",

@@ -7,6 +7,7 @@ import (
 )
 
 type (
+	// OrderDetails endpoint return
 	OrderDetails struct {
 		ID                       string            `json:"id"`
 		Reference                string            `json:"reference"`
@@ -25,6 +26,7 @@ type (
 		Preparationtimeinseconds string            `json:"preparationTimeInSeconds"`
 	}
 
+	// Payment details
 	Payment struct {
 		Name      string `json:"name"`
 		Code      string `json:"code"`
@@ -34,6 +36,7 @@ type (
 		Collector string `json:"collector,omitempty"`
 	}
 
+	// Customer details
 	Customer struct {
 		ID                           string `json:"id"`
 		UUID                         string `json:"uuid"`
@@ -43,6 +46,7 @@ type (
 		Orderscountonrestaurant      string `json:"ordersCountOnRestaurant"`
 	}
 
+	// DeliveryAddress from customer
 	DeliveryAddress struct {
 		Formattedaddress string      `json:"formattedAddress"`
 		Country          string      `json:"country"`
@@ -57,25 +61,28 @@ type (
 		Complement       string      `json:"complement"`
 	}
 
+	// Coordinates of a delivery
 	Coordinates struct {
 		Latitude  string `json:"latitude"`
 		Longitude string `json:"longitude"`
 	}
 
+	// Item of the order
 	Item struct {
-		Name          string     `json:"name"`
-		Quantity      string     `json:"quantity"`
-		Price         string     `json:"price"`
-		Subitemsprice string     `json:"subItemsPrice"`
-		Totalprice    string     `json:"totalPrice"`
-		Discount      string     `json:"discount"`
-		Addition      string     `json:"addition"`
-		Externalcode  string     `json:"externalCode,omitempty"`
-		Subitems      []Subitems `json:"subItems,omitempty"`
-		Observations  string     `json:"observations,omitempty"`
+		Name          string    `json:"name"`
+		Quantity      string    `json:"quantity"`
+		Price         string    `json:"price"`
+		Subitemsprice string    `json:"subItemsPrice"`
+		Totalprice    string    `json:"totalPrice"`
+		Discount      string    `json:"discount"`
+		Addition      string    `json:"addition"`
+		Externalcode  string    `json:"externalCode,omitempty"`
+		Subitems      []Subitem `json:"subItems,omitempty"`
+		Observations  string    `json:"observations,omitempty"`
 	}
 
-	Subitems struct {
+	// Subitems of the order
+	Subitem struct {
 		Name         string `json:"name"`
 		Quantity     string `json:"quantity"`
 		Price        string `json:"price"`
@@ -85,6 +92,7 @@ type (
 		Externalcode string `json:"externalCode"`
 	}
 
+	// TrackingResponse API response of tracking
 	TrackingResponse struct {
 		Date             interface{} `json:"date"`
 		DeliveryTime     time.Time   `json:"deliveryTime"`
@@ -96,6 +104,8 @@ type (
 		OrderID          string      `json:"orderId"`
 		TrackDate        time.Time   `json:"trackDate"`
 	}
+
+	// DeliveryInformationResponse API response of the delivery
 	DeliveryInformationResponse struct {
 		ExternalID         string      `json:"externalId"`
 		OrderStatus        string      `json:"orderStatus"`

@@ -14,14 +14,16 @@ import (
 )
 
 const (
-	V3Endpoint = "/v3.0/events"
-	V1Endpoint = "/v1.0/events"
+	v3Endpoint = "/v3.0/events"
+	v1Endpoint = "/v1.0/events"
 )
 
+// ErrUnauthorized api error
 var ErrUnauthorized = errors.New("Unauthorized request")
 var ErrReqLimitExceeded = errors.New("EVENTS POLL REQUEST LIMIT EXCEEDED")
 
 type (
+	// Service describes the event abstraction
 	Service interface {
 		Poll() ([]Event, error)
 		Acknowledge([]Event) (err error)
@@ -31,8 +33,11 @@ type (
 		ID string `json:"id"`
 	}
 
+	// Events is a group of Event
 	Events []Event
-	Event  struct {
+
+	// Event returned by the API
+	Event struct {
 		Code          string                 `json:"code"`
 		CorrelationID string                 `json:"correlationId"`
 		CreatedAt     time.Time              `json:"createdAt"`
@@ -46,10 +51,12 @@ type (
 	}
 )
 
+// New returns the event service implementation
 func New(adapter adapters.Http, authService auth.Service) *eventService {
 	return &eventService{adapter, authService}
 }
 
+// Poll queries the iFood API for new events
 func (ev *eventService) Poll() (ml []Event, err error) {
 	err = ev.auth.Validate()
 	if err != nil {
@@ -58,7 +65,7 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
-	endpoint := V3Endpoint + ":polling"
+	endpoint := v3Endpoint + ":polling"
 	resp, status, err := ev.adapter.DoRequest(
 		http.MethodGet, endpoint, nil, headers)
 	if err != nil {
@@ -88,6 +95,7 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 	return ml, json.Unmarshal(resp, &ml)
 }
 
+// Acknowledge queries the iFood API to set events as 'polled'
 func (ev *eventService) Acknowledge(events []Event) (err error) {
 	err = ev.auth.Validate()
 	if err != nil {
@@ -107,7 +115,7 @@ func (ev *eventService) Acknowledge(events []Event) (err error) {
 	headers["Content-Type"] = "application/json"
 	headers["Cache-Control"] = "no-cache"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
-	endpoint := V1Endpoint + "/acknowledgment"
+	endpoint := v1Endpoint + "/acknowledgment"
 	_, status, err := ev.adapter.DoRequest(
 		http.MethodPost, endpoint, reader, headers)
 	if err != nil {

@@ -1,5 +1,6 @@
 package catalog
 
+// Service describes the catalog abstraction
 type Service interface {
 	ListAllV2(merchantID string) (Catalogs, error)
 	ListUnsellableItems(merchantUUID, catalogID string) (UnsellableResponse, error)

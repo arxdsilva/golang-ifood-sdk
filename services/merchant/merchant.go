@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	V1Endpoint = "/v1.0/merchants"
-	V2Endpoint = "/v2.0/merchants"
+	v1Endpoint = "/v1.0/merchants"
+	v2Endpoint = "/v2.0/merchants"
 )
 
 var (
+	// ErrMerchantNotSpecified no merchant
 	ErrMerchantNotSpecified                   = errors.New("merchant not specified")
 	ErrMerchantORUnavailabilityIDNotSpecified = errors.New("merchant or unavailability not specified")
 )
@@ -49,7 +50,8 @@ func (m *merchantService) ListAll() (ml []Merchant, err error) {
 	}
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
-	resp, status, err := m.adapter.DoRequest(http.MethodGet, V1Endpoint, nil, headers)
+	resp, status, err := m.adapter.DoRequest(http.MethodGet,
+		v1Endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Merchant ListAll adapter.DoRequest error: ", err.Error())
 		return
@@ -78,7 +80,7 @@ func (m *merchantService) Unavailabilities(merchantUUID string) (mu Unavailabili
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/unavailabilities", V1Endpoint, merchantUUID)
+	endpoint := fmt.Sprintf("%s/%s/unavailabilities", v1Endpoint, merchantUUID)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Merchant Unavailabilities adapter.DoRequest error: ", err.Error())
@@ -108,7 +110,7 @@ func (m *merchantService) CreateUnavailabilityNow(merchantUUID, description stri
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/unavailabilities:now", V1Endpoint, merchantUUID)
+	endpoint := fmt.Sprintf("%s/%s/unavailabilities:now", v1Endpoint, merchantUUID)
 	unv := unavailability{Description: description, Minutes: pauseMinutes}
 	reader, err := httpadapter.NewJsonReader(unv)
 	if err != nil {
@@ -143,7 +145,7 @@ func (m *merchantService) DeleteUnavailability(merchantUUID, unavailabilityID st
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
-	endpoint := fmt.Sprintf("%s/%s/unavailabilities/%s", V1Endpoint, merchantUUID, unavailabilityID)
+	endpoint := fmt.Sprintf("%s/%s/unavailabilities/%s", v1Endpoint, merchantUUID, unavailabilityID)
 	_, status, err := m.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Merchant DeleteUnavailability adapter.DoRequest error: ", err.Error())
@@ -172,7 +174,7 @@ func (m *merchantService) Availability(merchantUUID string) (ar AvailabilityResp
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", m.auth.GetToken())
-	endpoint := fmt.Sprintf("/merchant%s/%s/availabilities", V2Endpoint, merchantUUID)
+	endpoint := fmt.Sprintf("/merchant%s/%s/availabilities", v2Endpoint, merchantUUID)
 	resp, status, err := m.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
 	if err != nil {
 		glg.Error("[SDK] Merchant Availability adapter.DoRequest error: ", err.Error())

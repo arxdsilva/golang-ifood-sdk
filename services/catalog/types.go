@@ -1,17 +1,23 @@
 package catalog
 
 type (
+	// Catalogs group of Catalog
 	Catalogs []Catalog
-	Catalog  struct {
+
+	// Catalog API response
+	Catalog struct {
 		ID         string   `json:"catalogId"`
 		Context    []string `json:"context"`
 		Status     string   `json:"status"`
 		ModifiedAt string   `json:"modifiedAt"`
 	}
 
+	// UnsellableResponse API response
 	UnsellableResponse struct {
 		Categories []Category `json:"categories"`
 	}
+
+	// Category struct
 	Category struct {
 		ID                   string           `json:"id"`
 		Status               string           `json:"status"`
@@ -20,12 +26,15 @@ type (
 		UnsellableItems      []UnsellableItem `json:"unsellableItems"`
 		UnsellablePizzaItems Pizza            `json:"unsellablePizzaItems"`
 	}
+
+	// UnsellableItem part of Category struct
 	UnsellableItem struct {
 		ID           string   `json:"id"`
 		ProductID    string   `json:"productId"`
 		Restrictions []string `json:"restrictions"`
 	}
 
+	// CategoryResponse from API when creating
 	CategoryResponse struct {
 		ID           string `json:"id"`
 		Sequence     int    `json:"sequence"`
@@ -37,6 +46,7 @@ type (
 		Pizza        Pizza  `json:"pizza"`
 	}
 
+	// Item product description
 	Item struct {
 		ID                  string   `json:"id"`
 		Name                string   `json:"name"`
@@ -74,6 +84,8 @@ type (
 		// SellingOption struct {
 		// } `json:"sellingOption"`
 	}
+
+	// CategoryItem linked product to a category
 	CategoryItem struct {
 		ID                  string    `json:"id"`
 		Name                string    `json:"name"`
@@ -87,6 +99,7 @@ type (
 		Shifts              []Shift   `json:"shifts"`
 	}
 
+	// CategoryCreateResponse create API response
 	CategoryCreateResponse struct {
 		ID           string `json:"id"`
 		Name         string `json:"name"`
@@ -96,11 +109,13 @@ type (
 		Template     string `json:"template"`
 	}
 
+	// Price of a product object
 	Price struct {
 		Value         float64 `json:"value"`
 		OriginalValue float64 `json:"originalValue"`
 	}
 
+	// Shift of a Item or CategoryItem
 	Shift struct {
 		StartTime string `json:"startTime"`
 		EndTime   string `json:"endTime"`

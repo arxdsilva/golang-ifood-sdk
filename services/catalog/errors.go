@@ -3,6 +3,7 @@ package catalog
 import "errors"
 
 var (
+	// ErrMerchantNotSpecified no merchant given
 	ErrMerchantNotSpecified = errors.New("merchant not specified")
 	ErrCatalogNotSpecified  = errors.New("Catalog ID was not specified")
 	ErrCategoryNotSpecified = errors.New("Category ID was not specified")
