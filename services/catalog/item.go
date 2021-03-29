@@ -29,7 +29,7 @@ import (
 // 		"sequence":0,
 // 		"shifts":[{...}]
 // }
-func (c *catalogService) CreateItem(merchantID, categoryID, productID string, ci CategoryItem) (cp Product, err error) {
+func (c *catalogService) CreateItem(merchantID, categoryID, productID string, ci CategoryItem) (cp ProductLink, err error) {
 	err = verifyCategoryItems(merchantID, categoryID, productID)
 	if err != nil {
 		glg.Error("[SDK] Catalog CreateItem verifyCategoryItems: ", err.Error())
@@ -73,7 +73,7 @@ func (c *catalogService) CreateItem(merchantID, categoryID, productID string, ci
 		glg.Error("[SDK] Catalog CreateItem err: ", err)
 		return
 	}
-	glg.Info("[SDK] Catalog CreateItem success")
+	glg.Infof("[SDK] Catalog CreateItem success product id '%s'", productID)
 	return cp, json.Unmarshal(resp, &cp)
 }
 
@@ -95,9 +95,52 @@ func (c *catalogService) CreateItem(merchantID, categoryID, productID string, ci
 // 		"sequence":0,
 // 		"shifts":[{...}]
 // }
-func (c *catalogService) EditItem(merchantID, categoryID, productID string) (cp Product, err error) {
-
-	return
+func (c *catalogService) EditItem(merchantID, categoryID, productID string, ci CategoryItem) (cp ProductLink, err error) {
+	err = verifyCategoryItems(merchantID, categoryID, productID)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditItem verifyCategoryItems: ", err.Error())
+		return
+	}
+	if err = ci.verify(); err != nil {
+		glg.Error("[SDK] Catalog EditItem verify: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog EditItem auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	headers["Content-Type"] = "application/json"
+	endpoint := v2Endpoint + fmt.Sprintf(
+		"/merchants/%s/categories/%s/products/%s", merchantID, categoryID, productID)
+	reader, err := httpadapter.NewJsonReader(ci)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditItem NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := c.adapter.DoRequest(http.MethodPatch, endpoint, reader, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog EditItem adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		badResp := &apiError{}
+		err = json.Unmarshal(resp, badResp)
+		if err != nil {
+			glg.Error("[SDK] Catalog DeleteProduct Unmarshal: ", err)
+			return
+		}
+		glg.Error("[SDK] Catalog EditItem status code: ", status, " merchant: ", merchantID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not create item category '%s', code: '%s'",
+			merchantID, categoryID, badResp.Details.Code)
+		glg.Error("[SDK] Catalog EditItem err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog EditItem success id '%s'", productID)
+	return cp, json.Unmarshal(resp, &cp)
 }
 
 // DeleteItem product-catalog association
