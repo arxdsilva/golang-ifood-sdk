@@ -33,6 +33,7 @@ type (
 		Price               Price    `json:"price"`
 		Shifts              []Shift  `json:"shifts"`
 		Serving             string   `json:"serving"`
+		Sequence            int      `json:"sequence"`
 		DietaryRestrictions []string `json:"dietaryRestrictions"`
 		Ean                 string   `json:"ean"`
 	}
