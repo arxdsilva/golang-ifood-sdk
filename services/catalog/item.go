@@ -73,7 +73,7 @@ func (c *catalogService) CreateItem(merchantID, categoryID, productID string, ci
 		glg.Error("[SDK] Catalog CreateItem err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Catalog CreateItem success product id '%s'", productID)
+	glg.Infof("[SDK] Catalog CreateItem success product id '%s', merchant '%s'", productID, merchantID)
 	return cp, json.Unmarshal(resp, &cp)
 }
 
@@ -139,7 +139,7 @@ func (c *catalogService) EditItem(merchantID, categoryID, productID string, ci C
 		glg.Error("[SDK] Catalog EditItem err: ", err)
 		return
 	}
-	glg.Infof("[SDK] Catalog EditItem success id '%s'", productID)
+	glg.Infof("[SDK] Catalog EditItem success product id '%s', merchant '%s'", productID, merchantID)
 	return cp, json.Unmarshal(resp, &cp)
 }
 
@@ -152,6 +152,39 @@ func (c *catalogService) EditItem(merchantID, categoryID, productID string, ci C
 // 404 not found
 //
 func (c *catalogService) DeleteItem(merchantID, categoryID, productID string) (err error) {
-
+	err = verifyCategoryItems(merchantID, categoryID, productID)
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteItem verifyCategoryItems: ", err.Error())
+		return
+	}
+	err = c.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteItem auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", c.auth.GetToken())
+	endpoint := v2Endpoint + fmt.Sprintf(
+		"/merchants/%s/categories/%s/products/%s", merchantID, categoryID, productID)
+	resp, status, err := c.adapter.DoRequest(http.MethodDelete, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Catalog DeleteItem adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		badResp := &apiError{}
+		err = json.Unmarshal(resp, badResp)
+		if err != nil {
+			glg.Error("[SDK] Catalog DeleteProduct Unmarshal: ", err)
+			return
+		}
+		glg.Error("[SDK] Catalog DeleteItem status code: ", status, " merchant: ", merchantID)
+		err = fmt.Errorf(
+			"Merchant '%s' could not create item category '%s', code: '%s'",
+			merchantID, categoryID, badResp.Details.Code)
+		glg.Error("[SDK] Catalog DeleteItem err: ", err)
+		return
+	}
+	glg.Infof("[SDK] Catalog DeleteItem success product id '%s', merchant '%s'", productID, merchantID)
 	return
 }
