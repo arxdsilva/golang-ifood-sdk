@@ -94,3 +94,23 @@ func TestEditItem_OK(t *testing.T) {
 	assert.Equal(t, float64(10), respCI.Price.Value)
 	assert.Equal(t, 1, respCI.Sequence)
 }
+
+func TestDeleteItem_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/catalog/v2.0/merchants/merchant_id/categories/category_id/products/product_id", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodDelete)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	catalogService := New(adapter, &am)
+	assert.NotNil(t, catalogService)
+	err := catalogService.DeleteItem("merchant_id", "category_id", "product_id")
+	assert.Nil(t, err)
+}
