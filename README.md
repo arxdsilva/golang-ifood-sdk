@@ -45,7 +45,7 @@ func main() {
         log.Fatal(err)
     }
     var newOrdersDetails []orders.OrderDetails
-	for _, event := range events {
+    for _, event := range events {
         err = container.EventsService.Acknowledge(event)
         if err != nil {
             fmt.Println("err: ", err)
