@@ -5,6 +5,7 @@ A golang Ifood sdk
 [![Coverage Status](https://coveralls.io/repos/github/arxdsilva/golang-ifood-sdk/badge.svg?branch=main)](https://coveralls.io/github/arxdsilva/golang-ifood-sdk?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/arxdsilva/golang-ifood-sdk)](https://goreportcard.com/report/github.com/arxdsilva/golang-ifood-sdk)
 [![LICENSE](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+[![GoDoc](https://godoc.org/github.com/arxdsilva/golang-ifood-sdk?status.svg)](https://godoc.org/github.com/arxdsilva/golang-ifood-sdk)
 
 ## Usage
 
