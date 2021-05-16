@@ -14,7 +14,7 @@ import (
 func TestNew(t *testing.T) {
 	mock := new(mocks.HttpClientMock)
 	adapter := httpadapter.New(mock, "")
-	as := New(adapter, "client", "secret")
+	as := New(adapter, "client", "secret", false)
 	assert.NotNil(t, as)
 }
 
@@ -29,7 +29,7 @@ func TestAuth_OK(t *testing.T) {
 	)
 	defer ts.Close()
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
-	as := New(adapter, "client", "secret")
+	as := New(adapter, "client", "secret", false)
 	assert.NotNil(t, as)
 	c, err := as.Authenticate("user", "pass")
 	assert.Nil(t, err)
@@ -46,7 +46,7 @@ func TestAuth_NotOK(t *testing.T) {
 	)
 	defer ts.Close()
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
-	as := New(adapter, "client", "secret")
+	as := New(adapter, "client", "secret", false)
 	assert.NotNil(t, as)
 	c, err := as.Authenticate("user", "pass")
 	assert.Nil(t, c)
@@ -64,7 +64,7 @@ func TestAuth_BadResp(t *testing.T) {
 	)
 	defer ts.Close()
 	adapter := httpadapter.New(http.DefaultClient, ts.URL)
-	as := New(adapter, "client", "secret")
+	as := New(adapter, "client", "secret", false)
 	assert.NotNil(t, as)
 	c, err := as.Authenticate("user", "pass")
 	assert.Nil(t, c)
