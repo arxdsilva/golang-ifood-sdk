@@ -18,6 +18,7 @@ import (
 // Container is the SDK abstractions holder to facilitate the API manipulation
 type Container struct {
 	env             int
+	v2              bool
 	timeout         time.Duration
 	httpadapter     adapters.Http
 	AuthService     authentication.Service
@@ -28,8 +29,8 @@ type Container struct {
 }
 
 // New returns a new container
-func New(env int, timeout time.Duration) *Container {
-	return &Container{env: env, timeout: timeout}
+func New(env int, timeout time.Duration, v2 bool) *Container {
+	return &Container{env: env, timeout: timeout, v2: v2}
 }
 
 // GetHttpAdapter returns new HTTP adapter according to the env
@@ -44,6 +45,10 @@ func (c *Container) GetHttpAdapter() adapters.Http {
 	case EnvDevelopment:
 		c.httpadapter = httpadapter.New(new(mocks.HttpClientMock), "")
 	case EnvProduction:
+		if c.v2 {
+			c.httpadapter = httpadapter.New(client, v2urlProduction)
+			return c.httpadapter
+		}
 		c.httpadapter = httpadapter.New(client, urlProduction)
 	case EnvSandBox:
 		c.httpadapter = httpadapter.New(client, urlSandbox)
