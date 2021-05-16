@@ -33,6 +33,17 @@ func New(env int, timeout time.Duration, v2 bool) *Container {
 	return &Container{env: env, timeout: timeout, v2: v2}
 }
 
+func Create(clientId, clientSecret string, env int, v2 bool) (c *Container) {
+	c = New(env, time.Minute, v2)
+	c.GetHttpAdapter()
+	c.GetAuthenticationService(clientId, clientSecret)
+	c.GetMerchantService()
+	c.GetCatalogService()
+	c.GetEventsService()
+	c.GetOrdersService()
+	return
+}
+
 // GetHttpAdapter returns new HTTP adapter according to the env
 func (c *Container) GetHttpAdapter() adapters.Http {
 	if c.httpadapter != nil {
@@ -65,7 +76,7 @@ func (c *Container) GetAuthenticationService(clientId, clientSecret string) auth
 		return nil
 	}
 	if c.AuthService == nil {
-		c.AuthService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret)
+		c.AuthService = authentication.New(c.GetHttpAdapter(), clientId, clientSecret, c.v2)
 	}
 	return c.AuthService
 }
