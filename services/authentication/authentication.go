@@ -23,6 +23,7 @@ var ErrUnauthorized = errors.New("Unauthorized")
 type (
 	// Service describes the auth service abstraction
 	Service interface {
+		V2GetUserCode(clientID string) (*UserCode, error)
 		Authenticate(username, password string) (*Credentials, error)
 		Validate() error
 		GetToken() string
@@ -34,6 +35,14 @@ type (
 		TokenType   string `json:"token_type"`
 		Scope       string `json:"scope"`
 		ExpiresIn   int    `json:"expires_in"`
+	}
+
+	UserCode struct {
+		Usercode                  string `json:"userCode"`
+		AuthorizationCodeVerifier string `json:"authorizationCodeVerifier"`
+		VerificationURL           string `json:"verificationUrl"`
+		VerificationURLComplete   string `json:"verificationUrlComplete"`
+		ExpiresIn                 int    `json:"expiresIn"`
 	}
 
 	authService struct {
@@ -48,6 +57,36 @@ type (
 // New returns an auth service implementation
 func New(adapter adapters.Http, clientId, clientSecret string) *authService {
 	return &authService{adapter: adapter, clientId: clientId, clientSecret: clientSecret}
+}
+
+func (a *authService) V2GetUserCode(clientID string) (uc *UserCode, err error) {
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	writer.WriteField("client_id", clientID)
+	if err = writer.Close(); err != nil {
+		glg.Error("[SDK] V2GetUserCode writer.Close: ", err.Error())
+		return
+	}
+	reader := bytes.NewReader(payload.Bytes())
+	headers := make(map[string]string)
+	headers["Content-Type"] = writer.FormDataContentType()
+	headers["Accept"] = "*/*"
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
+	if err != nil {
+		glg.Error("[SDK] V2GetUserCode adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		glg.Warn("[SDK] V2GetUserCode: status code ", status)
+		err = ErrUnauthorized
+		return
+	}
+	if err = json.Unmarshal(resp, &uc); err != nil {
+		glg.Error("[SDK] Unmarshal: ", err)
+		return
+	}
+	glg.Info("[SDK] V2GetUserCode success")
+	return
 }
 
 // Authenticate queries the iFood API for a credential
