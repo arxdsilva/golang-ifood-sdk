@@ -18,6 +18,14 @@ func (a *AuthMock) V2GetUserCode() (uc *UserCode, err error) {
 	return nil, args.Error(1)
 }
 
+func (a *AuthMock) V2Authenticate(authType, authCode, authCodeVerifier, refreshToken string) (c *V2Credentials, err error) {
+	args := a.Called(authType, authCode, authCodeVerifier, refreshToken)
+	if res, ok := args.Get(0).(*V2Credentials); ok {
+		return res, nil
+	}
+	return nil, args.Error(1)
+}
+
 // Authenticate mock of auth service
 func (a *AuthMock) Authenticate(user, pass string) (c *Credentials, err error) {
 	args := a.Called(user, pass)
