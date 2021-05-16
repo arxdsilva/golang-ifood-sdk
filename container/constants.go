@@ -8,6 +8,7 @@ const (
 	// EnvSandBox is the local/sandbox env
 	EnvSandBox
 
-	urlProduction = "https://pos-api.ifood.com.br"
-	urlSandbox    = "https://pos-api.ifood.com.br"
+	urlProduction   = "https://pos-api.ifood.com.br"
+	v2urlProduction = "https://merchant-api.ifood.com.br"
+	urlSandbox      = "https://pos-api.ifood.com.br"
 )
