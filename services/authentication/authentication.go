@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	authEndpoint   = "/oauth/token"
-	valueGrantType = "password"
+	authEndpoint     = "/oauth/token"
+	userCodeEndpoint = "/oauth/userCode"
+	valueGrantType   = "password"
 )
 
 // ErrUnauthorized API no auth error
@@ -31,6 +32,7 @@ type (
 	// Service describes the auth service abstraction
 	Service interface {
 		V2GetUserCode() (*UserCode, error)
+		V2Authenticate(authType, authCode, authCodeVerifier, refreshToken string) (c *V2Credentials, err error)
 		Authenticate(username, password string) (*Credentials, error)
 		Validate() error
 		GetToken() string
@@ -86,18 +88,13 @@ func New(adapter adapters.Http, clientId, clientSecret string, v2 bool) *authSer
 }
 
 func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
-	payload := &bytes.Buffer{}
-	writer := multipart.NewWriter(payload)
-	writer.WriteField("client_id", a.clientId)
-	if err = writer.Close(); err != nil {
-		glg.Error("[SDK] V2GetUserCode writer.Close: ", err.Error())
-		return
-	}
-	reader := bytes.NewReader(payload.Bytes())
+	data := url.Values{}
+	data.Set("client_id", a.clientId)
 	headers := make(map[string]string)
-	headers["Content-Type"] = writer.FormDataContentType()
-	headers["Accept"] = "*/*"
-	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
+	headers["Content-Type"] = "application/x-www-form-urlencoded"
+	headers["Content-Length"] = strconv.Itoa(len(data.Encode()))
+	reader := strings.NewReader(data.Encode())
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, userCodeEndpoint, reader, headers)
 	if err != nil {
 		glg.Error("[SDK] V2GetUserCode adapter.DoRequest: ", err.Error())
 		return
