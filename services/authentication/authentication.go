@@ -23,7 +23,7 @@ var ErrUnauthorized = errors.New("Unauthorized")
 type (
 	// Service describes the auth service abstraction
 	Service interface {
-		V2GetUserCode(clientID string) (*UserCode, error)
+		V2GetUserCode() (*UserCode, error)
 		Authenticate(username, password string) (*Credentials, error)
 		Validate() error
 		GetToken() string
@@ -59,10 +59,10 @@ func New(adapter adapters.Http, clientId, clientSecret string) *authService {
 	return &authService{adapter: adapter, clientId: clientId, clientSecret: clientSecret}
 }
 
-func (a *authService) V2GetUserCode(clientID string) (uc *UserCode, err error) {
+func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	writer.WriteField("client_id", clientID)
+	writer.WriteField("client_id", a.clientId)
 	if err = writer.Close(); err != nil {
 		glg.Error("[SDK] V2GetUserCode writer.Close: ", err.Error())
 		return

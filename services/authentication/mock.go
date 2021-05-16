@@ -10,8 +10,8 @@ type AuthMock struct {
 }
 
 // V2GetUserCode mock of auth service
-func (a *AuthMock) V2GetUserCode(clientID string) (uc *UserCode, err error) {
-	args := a.Called(clientID)
+func (a *AuthMock) V2GetUserCode() (uc *UserCode, err error) {
+	args := a.Called()
 	if res, ok := args.Get(0).(*UserCode); ok {
 		return res, nil
 	}
