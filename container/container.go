@@ -124,7 +124,7 @@ func (c *Container) GetEventsService() events.Service {
 		return nil
 	}
 	if c.EventsService == nil {
-		c.EventsService = events.New(c.GetHttpAdapter(), c.AuthService)
+		c.EventsService = events.New(c.GetHttpAdapter(), c.AuthService, true)
 	}
 	return c.EventsService
 }
