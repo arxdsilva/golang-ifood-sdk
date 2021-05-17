@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	v3Endpoint = "/v3.0/events"
-	v1Endpoint = "/v1.0/events"
+	v3Endpoint    = "/v3.0/events"
+	v1Endpoint    = "/v1.0/events"
+	v2APIEndpoint = "/order/v1.0"
 )
 
 // ErrUnauthorized api error
@@ -47,15 +48,25 @@ type (
 		Metadata      map[string]interface{} `json:"metadata,omitempty"`
 	}
 
+	V2Event struct {
+		Createdat time.Time              `json:"createdAt"`
+		Fullcode  string                 `json:"fullCode"`
+		Metadata  map[string]interface{} `json:"metadata"`
+		Code      string                 `json:"code"`
+		Orderid   string                 `json:"orderId"`
+		ID        string                 `json:"id"`
+	}
+
 	eventService struct {
 		adapter adapters.Http
 		auth    auth.Service
+		v2      bool
 	}
 )
 
 // New returns the event service implementation
-func New(adapter adapters.Http, authService auth.Service) *eventService {
-	return &eventService{adapter, authService}
+func New(adapter adapters.Http, authService auth.Service, v2 bool) *eventService {
+	return &eventService{adapter, authService, v2}
 }
 
 // Poll queries the iFood API for new events
@@ -94,6 +105,45 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 		return
 	}
 	glg.Info("[SDK] Poll was successfull")
+	return ml, json.Unmarshal(resp, &ml)
+}
+
+// V2Poll queries the iFood API for new events
+func (ev *eventService) V2Poll() (ml []V2Event, err error) {
+	err = ev.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Event V2Poll) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
+	endpoint := v2APIEndpoint + "/events:polling"
+	resp, status, err := ev.adapter.DoRequest(
+		http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] (Event V2Poll) adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status == http.StatusNotFound {
+		glg.Info("[SDK] (Event V2Poll) adapter.DoRequest No events to poll")
+		return
+	}
+	if status == http.StatusTooManyRequests {
+		err = ErrReqLimitExceeded
+		glg.Warn("[SDK] (Event V2Poll) adapter.DoRequest REQUEST LIMIT EXCEEDED")
+		return
+	}
+	if status == http.StatusUnauthorized {
+		err = ErrUnauthorized
+		glg.Warn("[SDK] (Event V2Poll) adapter.DoRequest no auth")
+		return
+	}
+	if status != http.StatusOK {
+		err = errors.New("Events could not get polled")
+		glg.Errorf("[SDK] (Event V2Poll) adapter.DoRequest status '%d' err: %s", status, err.Error())
+		return
+	}
+	glg.Info("[SDK] (V2Poll) was successfull")
 	return ml, json.Unmarshal(resp, &ml)
 }
 
