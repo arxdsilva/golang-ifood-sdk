@@ -59,6 +59,7 @@ type (
 		SetDispatchStatus(reference string) error
 		V2SetDispatchStatus(reference string) error
 		SetReadyToDeliverStatus(reference string) error
+		V2SetReadyToPickupStatus(reference string) error
 		SetCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
 		Tracking(orderUUID string) (TrackingResponse, error)
@@ -101,6 +102,7 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 		glg.Error("[SDK] Orders GetDetails err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders GetDetails) '%s' OK", orderReference)
 	return od, json.Unmarshal(resp, &od)
 }
 
@@ -130,6 +132,7 @@ func (o *ordersService) V2GetDetails(orderUUID string) (od V2OrderDetails, err e
 		glg.Error("[SDK] (Orders V2GetDetails) status '%d' err: '%s'", status, err.Error())
 		return
 	}
+	glg.Debugf("[SDK] (Orders V2GetDetails) '%s' OK", orderUUID)
 	return od, json.Unmarshal(resp, &od)
 }
 
@@ -158,6 +161,7 @@ func (o *ordersService) SetIntegrateStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetIntegrateStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders SetIntegrateStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -186,6 +190,7 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetConfirmStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders SetConfirmStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -216,6 +221,7 @@ func (o *ordersService) V2SetConfirmStatus(orderReference string) (err error) {
 		glg.Error("[SDK] (Orders V2SetConfirmStatus) status '%d' err: '%s'", status, err.Error())
 		return
 	}
+	glg.Debugf("[SDK] (Orders V2SetConfirmStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -244,6 +250,7 @@ func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetDispatchStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders SetDispatchStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -273,6 +280,7 @@ func (o *ordersService) V2SetDispatchStatus(orderReference string) (err error) {
 		glg.Error("[SDK] (Orders V2SetDispatchStatus) status '%d' err: '%s'", status, err.Error())
 		return
 	}
+	glg.Debugf("[SDK] (Orders V2SetDispatchStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -301,6 +309,37 @@ func (o *ordersService) SetReadyToDeliverStatus(orderReference string) (err erro
 		glg.Error("[SDK] Orders SetReadyToDeliverStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders SetReadyToDeliverStatus) '%s' OK", orderReference)
+	return
+}
+
+func (o *ordersService) V2SetReadyToPickupStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] (Orders V2SetReadyToPickupStatus): ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetReadyToPickupStatus) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s/readyToPickup", newV2Endpoint, orderReference)
+	resp, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetReadyToPickupStatus) adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders V2SetReadyToPickupStatus) status '%d' err: '%s'", status, err.Error())
+		return
+	}
+	glg.Debugf("[SDK] (Orders V2SetReadyToPickupStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -337,6 +376,7 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 		glg.Error("[SDK] Orders SetCancelStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders SetCancelStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -376,6 +416,7 @@ func (o *ordersService) ClientCancellationStatus(orderReference string, accepted
 		glg.Error("[SDK] Orders ClientCancellationStatus err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders ClientCancellationStatus) '%s' OK", orderReference)
 	return
 }
 
@@ -404,6 +445,7 @@ func (o *ordersService) Tracking(orderUUID string) (tr TrackingResponse, err err
 		glg.Error("[SDK] Orders Tracking err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders Tracking) '%s' OK", orderUUID)
 	return tr, json.Unmarshal(resp, &tr)
 }
 
@@ -432,6 +474,7 @@ func (o *ordersService) DeliveryInformation(orderUUID string) (di DeliveryInform
 		glg.Error("[SDK] Orders DeliveryInformation err: ", err)
 		return
 	}
+	glg.Debugf("[SDK] (Orders DeliveryInformation) '%s' OK", orderUUID)
 	return di, json.Unmarshal(resp, &di)
 }
 
