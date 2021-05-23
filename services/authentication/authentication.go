@@ -128,8 +128,8 @@ func (a *authService) V2Authenticate(authType, authCode, authCodeVerifier, refre
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 	headers["Content-Length"] = strconv.Itoa(len(data.Encode()))
-	reader := strings.NewReader(data.Encode())
-	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
+	body := strings.NewReader(data.Encode())
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, body, headers)
 	if err != nil {
 		glg.Error("[SDK] V2Authenticate adapter.DoRequest: ", err.Error())
 		return

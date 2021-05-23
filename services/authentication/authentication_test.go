@@ -9,6 +9,7 @@ import (
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -118,4 +119,41 @@ func Test_verifyV2Inputs_OK_refresh_token(t *testing.T) {
 	refreshToken := "TOKEN"
 	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
 	assert.Nil(t, err)
+}
+
+func TestV2Auth_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/oauth/token", r.URL.Path)
+			require.Contains(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
+			fmt.Fprintf(w, `{"accessToken":"token","expiresIn":3600}`)
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	defer ts.Close()
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	as := New(adapter, "client", "secret", false)
+	assert.NotNil(t, as)
+	c, err := as.V2Authenticate("authorization_code", "testCode", "verifier", "refresh")
+	assert.Nil(t, err)
+	assert.Equal(t, "token", c.AccessToken)
+}
+
+func TestV2Auth_RespNotOK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/oauth/token", r.URL.Path)
+			require.Contains(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": {"code": "BadRequest","message": "Invalid grant type"}}`)
+		}),
+	)
+	defer ts.Close()
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	as := New(adapter, "client", "secret", false)
+	assert.NotNil(t, as)
+	c, err := as.V2Authenticate("authorization_code", "testCode", "verifier", "refresh")
+	assert.Nil(t, c)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrUnauthorized, err)
 }
