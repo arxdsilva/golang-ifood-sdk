@@ -1399,3 +1399,111 @@ func Test_V2RequestCancelStatus_DoReqErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "some")
 }
+
+func Test_V2ClientCancellationStatus_AcceptOK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/order/v1.0/orders/reference_id/acceptCancellation", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusAccepted)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("reference_id", true)
+	assert.Nil(t, err)
+}
+
+func Test_V2ClientCancellationStatus_DenyOK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/order/v1.0/orders/reference_id/denyCancellation", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusAccepted)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("reference_id", false)
+	assert.Nil(t, err)
+}
+
+func Test_V2ClientCancellationStatus_NoRefereceID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("", true)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrOrderReferenceNotSpecified, err)
+}
+
+func Test_V2ClientCancellationStatus_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("some err"))
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "ts.URL")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("reference", true)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
+
+func Test_V2ClientCancellationStatus_StatusBadRequest(t *testing.T) {
+	resp := `{
+		"error": {
+			"code": "string",
+			"field": "string",
+			"details": [null],
+			"message": "bad request"
+		}
+	}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/order/v1.0/orders/reference_id/acceptCancellation", r.URL.Path)
+			assert.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			assert.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("reference_id", true)
+	assert.NotNil(t, err)
+	assert.Equal(t, "bad request", err.Error())
+}
+
+func Test_V2ClientCancellationStatus_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2ClientCancellationStatus("reference_id", true)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "some")
+}
