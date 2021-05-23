@@ -61,13 +61,15 @@ type (
 		ID        string                 `json:"id"`
 	}
 
-	errV2API struct {
-		Error struct {
-			Code    string        `json:"code"`
-			Field   string        `json:"field"`
-			Details []interface{} `json:"details"`
-			Message string        `json:"message"`
-		} `json:"error"`
+	ErrV2API struct {
+		Error APIError `json:"error"`
+	}
+
+	APIError struct {
+		Code    string        `json:"code"`
+		Field   string        `json:"field"`
+		Details []interface{} `json:"details"`
+		Message string        `json:"message"`
 	}
 
 	eventService struct {
@@ -151,7 +153,7 @@ func (ev *eventService) V2Poll() (ml []V2Event, err error) {
 		return
 	}
 	if status != http.StatusOK {
-		errMsg := errV2API{}
+		errMsg := ErrV2API{}
 		json.Unmarshal(resp, &errMsg)
 		err = errors.New(errMsg.Error.Message)
 		glg.Errorf("[SDK] (Event V2Poll) adapter.DoRequest status '%d' api message:'%s'", status, errMsg.Error.Message)
@@ -231,7 +233,7 @@ func (ev *eventService) V2Acknowledge(events []V2Event) (err error) {
 		return
 	}
 	if status != http.StatusAccepted {
-		errMsg := errV2API{}
+		errMsg := ErrV2API{}
 		json.Unmarshal(resp, &errMsg)
 		fmt.Println(string(resp))
 		fmt.Println(errMsg)
