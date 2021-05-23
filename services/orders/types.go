@@ -136,6 +136,11 @@ type (
 		Details string `json:"details"`
 	}
 
+	v2CancelOrder struct {
+		Reason           string `json:"reason"`
+		CancellationCode string `json:"cancellationCode"`
+	}
+
 	V2OrderDetails struct {
 		Benefits                 []V2Benefit           `json:"benefits"`
 		Ordertype                string                `json:"orderType"`

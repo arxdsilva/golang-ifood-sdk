@@ -61,6 +61,7 @@ type (
 		SetReadyToDeliverStatus(reference string) error
 		V2SetReadyToPickupStatus(reference string) error
 		SetCancelStatus(reference, code string) error
+		V2RequestCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
 		Tracking(orderUUID string) (TrackingResponse, error)
 		DeliveryInformation(orderUUID string) (DeliveryInformationResponse, error)
@@ -377,6 +378,44 @@ func (o *ordersService) SetCancelStatus(orderReference, code string) (err error)
 		return
 	}
 	glg.Debugf("[SDK] (Orders SetCancelStatus) '%s' OK", orderReference)
+	return
+}
+
+// V2RequestCancelStatus on ifood v2 API
+
+func (o *ordersService) V2RequestCancelStatus(orderReference, code string) (err error) {
+	if err = verifyCancel(orderReference, code); err != nil {
+		glg.Error("[SDK] (Orders::V2RequestCancelStatus) verifyCancel: ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Orders::V2RequestCancelStatus) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s/requestCancellation", newV2Endpoint, orderReference)
+	detail := CancelCodes[code]
+	co := v2CancelOrder{Reason: detail, CancellationCode: code}
+	reader, err := httpadapter.NewJsonReader(co)
+	if err != nil {
+		glg.Error("[SDK] (Orders::V2RequestCancelStatus) NewJsonReader error: ", err.Error())
+		return
+	}
+	resp, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, reader, headers)
+	if err != nil {
+		glg.Error("[SDK] (Orders::V2RequestCancelStatus) adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders::V2RequestCancelStatus) status '%d' err: '%s'", status, err.Error())
+		return
+	}
+	glg.Debugf("[SDK] (Orders::V2RequestCancelStatus) '%s' OK", orderReference)
 	return
 }
 
