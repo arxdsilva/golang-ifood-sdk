@@ -28,6 +28,7 @@ var ErrReqLimitExceeded = errors.New("EVENTS POLL REQUEST LIMIT EXCEEDED")
 type (
 	// Service describes the event abstraction
 	Service interface {
+		V2Poll() (ml []V2Event, err error)
 		Poll() ([]Event, error)
 		Acknowledge([]Event) (err error)
 	}
