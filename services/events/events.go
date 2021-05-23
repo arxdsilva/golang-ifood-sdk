@@ -24,6 +24,7 @@ var ErrUnauthorized = errors.New("Unauthorized request")
 
 // ErrReqLimitExceeded API query limit exceeded
 var ErrReqLimitExceeded = errors.New("EVENTS POLL REQUEST LIMIT EXCEEDED")
+var ErrNotFound = errors.New("EVENTS POLL REQUEST RETURNED NOT FOUND")
 
 type (
 	// Service describes the event abstraction
@@ -56,6 +57,15 @@ type (
 		Code      string                 `json:"code"`
 		Orderid   string                 `json:"orderId"`
 		ID        string                 `json:"id"`
+	}
+
+	errV2Polling struct {
+		Error struct {
+			Code    string        `json:"code"`
+			Field   string        `json:"field"`
+			Details []interface{} `json:"details"`
+			Message string        `json:"message"`
+		} `json:"error"`
 	}
 
 	eventService struct {
@@ -110,6 +120,10 @@ func (ev *eventService) Poll() (ml []Event, err error) {
 }
 
 // V2Poll queries the iFood API for new events
+// 		in the future we'll add a merchants param to allow filtering,
+// 		for now this works with <100 merchants
+// 			V2Poll(merchants []string)
+// 			req.Header.Set("X-Polling-Merchants", "m1,m2")
 func (ev *eventService) V2Poll() (ml []V2Event, err error) {
 	err = ev.auth.Validate()
 	if err != nil {
@@ -129,19 +143,16 @@ func (ev *eventService) V2Poll() (ml []V2Event, err error) {
 		glg.Info("[SDK] (Event V2Poll) adapter.DoRequest No events to poll")
 		return
 	}
-	if status == http.StatusTooManyRequests {
-		err = ErrReqLimitExceeded
-		glg.Warn("[SDK] (Event V2Poll) adapter.DoRequest REQUEST LIMIT EXCEEDED")
-		return
-	}
-	if status == http.StatusUnauthorized {
+	if status == http.StatusForbidden {
 		err = ErrUnauthorized
-		glg.Warn("[SDK] (Event V2Poll) adapter.DoRequest no auth")
+		glg.Warn("[SDK] (Event V2Poll) adapter.DoRequest no auth", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		err = errors.New("Events could not get polled")
-		glg.Errorf("[SDK] (Event V2Poll) adapter.DoRequest status '%d' err: %s", status, err.Error())
+		errMsg := errV2Polling{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Errorf("[SDK] (Event V2Poll) adapter.DoRequest status '%d' api message:'%s'", status, errMsg.Error.Message)
 		return
 	}
 	glg.Info("[SDK] (V2Poll) was successfull")
