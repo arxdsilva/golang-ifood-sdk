@@ -2,19 +2,22 @@ package orders
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
 	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
+	"github.com/arxdsilva/golang-ifood-sdk/services/events"
 	"github.com/kpango/glg"
 )
 
 const (
-	v1Endpoint = "/v1.0/orders"
-	v2Endpoint = "/v2.0/orders"
-	v3Endpoint = "/v3.0/orders"
+	v1Endpoint    = "/v1.0/orders"
+	v2Endpoint    = "/v2.0/orders"
+	v3Endpoint    = "/v3.0/orders"
+	newV2Endpoint = "/order/v1.0/orders/"
 )
 
 var (
@@ -48,6 +51,7 @@ var (
 type (
 	// Service determinates the order's interface
 	Service interface {
+		V2GetDetails(reference string) (V2OrderDetails, error)
 		GetDetails(reference string) (OrderDetails, error)
 		SetIntegrateStatus(reference string) error
 		SetConfirmStatus(reference string) error
@@ -93,6 +97,35 @@ func (o *ordersService) GetDetails(orderReference string) (od OrderDetails, err 
 		glg.Error("[SDK] Orders GetDetails status code: ", status)
 		err = fmt.Errorf("Order reference '%s' could not retrieve details", orderReference)
 		glg.Error("[SDK] Orders GetDetails err: ", err)
+		return
+	}
+	return od, json.Unmarshal(resp, &od)
+}
+
+func (o *ordersService) V2GetDetails(orderUUID string) (od V2OrderDetails, err error) {
+	if orderUUID == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] (Orders V2GetDetails): ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Orders V2GetDetails) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s", newV2Endpoint, orderUUID)
+	resp, status, err := o.adapter.DoRequest(http.MethodGet, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] (Orders V2GetDetails) adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusOK {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders V2GetDetails) status '%d' err: '%s'", status, err.Error())
 		return
 	}
 	return od, json.Unmarshal(resp, &od)

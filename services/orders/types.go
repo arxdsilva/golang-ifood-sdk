@@ -46,6 +46,18 @@ type (
 		Orderscountonrestaurant      string `json:"ordersCountOnRestaurant"`
 	}
 
+	V2Customer struct {
+		Phone struct {
+			Number              string    `json:"number"`
+			Localizer           string    `json:"localizer"`
+			Localizerexpiration time.Time `json:"localizerExpiration"`
+		} `json:"phone"`
+		Documentnumber        string `json:"documentNumber"`
+		Name                  string `json:"name"`
+		Orderscountonmerchant int    `json:"ordersCountOnMerchant"`
+		ID                    string `json:"id"`
+	}
+
 	// DeliveryAddress from customer
 	DeliveryAddress struct {
 		Formattedaddress string      `json:"formattedAddress"`
@@ -122,5 +134,133 @@ type (
 	cancelOrder struct {
 		Code    string `json:"cancellationCode"`
 		Details string `json:"details"`
+	}
+
+	V2OrderDetails struct {
+		Benefits                 []V2Benefit           `json:"benefits"`
+		Ordertype                string                `json:"orderType"`
+		Payments                 V2Payments            `json:"payments"`
+		Merchant                 V2MerchantInfos       `json:"merchant"`
+		SalesChannel             string                `json:"salesChannel"`
+		OrderTiming              string                `json:"orderTiming"`
+		CreatedAt                time.Time             `json:"createdAt"`
+		Total                    V2OrderValues         `json:"total"`
+		PreparationStartDatetime time.Time             `json:"preparationStartDateTime"`
+		ID                       string                `json:"id"`
+		DisplayID                string                `json:"displayId"`
+		Items                    []V2Item              `json:"items"`
+		Customer                 V2Customer            `json:"customer"`
+		ExtraInfo                string                `json:"extraInfo"`
+		Delivery                 V2DeliveryInformation `json:"delivery"`
+		Schedule                 V2Schedule            `json:"schedule"`
+		Indoor                   V2Indoor              `json:"indoor"`
+		Takeout                  V2Takeout             `json:"takeout"`
+	}
+
+	V2Item struct {
+		Unitprice    int    `json:"unitPrice"`
+		Quantity     int    `json:"quantity"`
+		Externalcode string `json:"externalCode"`
+		Totalprice   int    `json:"totalPrice"`
+		Index        int    `json:"index"`
+		Unit         string `json:"unit"`
+		Ean          string `json:"ean"`
+		Price        int    `json:"price"`
+		Observations string `json:"observations"`
+		Name         string `json:"name"`
+		Options      []struct {
+			Unitprice    int    `json:"unitPrice"`
+			Unit         string `json:"unit"`
+			Ean          string `json:"ean"`
+			Quantity     int    `json:"quantity"`
+			Externalcode string `json:"externalCode"`
+			Price        int    `json:"price"`
+			Name         string `json:"name"`
+			Index        int    `json:"index"`
+			ID           string `json:"id"`
+		} `json:"options"`
+		ID           string `json:"id"`
+		Optionsprice int    `json:"optionsPrice"`
+	}
+
+	V2DeliveryInformation struct {
+		Mode            string `json:"mode"`
+		Deliveredby     string `json:"deliveredBy"`
+		Deliveryaddress struct {
+			Reference        string `json:"reference"`
+			Country          string `json:"country"`
+			Streetname       string `json:"streetName"`
+			Formattedaddress string `json:"formattedAddress"`
+			Streetnumber     string `json:"streetNumber"`
+			City             string `json:"city"`
+			Postalcode       string `json:"postalCode"`
+			Coordinates      struct {
+				Latitude  int `json:"latitude"`
+				Longitude int `json:"longitude"`
+			} `json:"coordinates"`
+			Neighborhood string `json:"neighborhood"`
+			State        string `json:"state"`
+			Complement   string `json:"complement"`
+		} `json:"deliveryAddress"`
+		Deliverydatetime time.Time `json:"deliveryDateTime"`
+	}
+
+	V2Payments struct {
+		Methods []struct {
+			Wallet struct {
+				Name string `json:"name"`
+			} `json:"wallet"`
+			Method   string `json:"method"`
+			Prepaid  bool   `json:"prepaid"`
+			Currency string `json:"currency"`
+			Type     string `json:"type"`
+			Value    int    `json:"value"`
+			Cash     struct {
+				Changefor int `json:"changeFor"`
+			} `json:"cash"`
+			Card struct {
+				Brand string `json:"brand"`
+			} `json:"card"`
+		} `json:"methods"`
+		Pending int `json:"pending"`
+		Prepaid int `json:"prepaid"`
+	}
+
+	V2OrderValues struct {
+		Benefits    int `json:"benefits"`
+		Deliveryfee int `json:"deliveryFee"`
+		Orderamount int `json:"orderAmount"`
+		Subtotal    int `json:"subTotal"`
+	}
+
+	V2Benefit struct {
+		Targetid          string `json:"targetId"`
+		Sponsorshipvalues []struct {
+			Name  string `json:"name"`
+			Value int    `json:"value"`
+		} `json:"sponsorshipValues"`
+		Value  int    `json:"value"`
+		Target string `json:"target"`
+	}
+
+	V2MerchantInfos struct {
+		Name string `json:"name"`
+		ID   string `json:"id"`
+	}
+
+	V2Schedule struct {
+		Deliverydatetimestart time.Time `json:"deliveryDateTimeStart"`
+		Deliverydatetimeend   time.Time `json:"deliveryDateTimeEnd"`
+	}
+
+	V2Indoor struct {
+		Mode             string    `json:"mode"`
+		Deliverydatetime time.Time `json:"deliveryDateTime"`
+		Table            string    `json:"table"`
+	}
+
+	V2Takeout struct {
+		Mode            string    `json:"mode"`
+		Takeoutdatetime time.Time `json:"takeoutDateTime"`
 	}
 )

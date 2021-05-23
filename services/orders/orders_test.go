@@ -12,6 +12,7 @@ import (
 	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var orderDetails = `{
@@ -149,7 +150,112 @@ var trackingOK = `{
 	"longitude": 0,
 	"orderId": "string",
 	"trackDate": "2020-06-29T15:24:30.406Z"
-  }`
+}`
+
+var v2OrderDetails = `{
+	"benefits": [{"targetId": "string","sponsorshipValues": [{"name": "string","value": 0}],"value": 0,"target": "string"}],
+	"orderType": "DELIVERY",
+	"payments": {
+	  "methods": [
+		{
+		  "wallet": {"name": "string"},
+		  "method": "string",
+		  "prepaid": true,
+		  "currency": "string",
+		  "type": "ONLINE",
+		  "value": 0,
+		  "cash": {
+			"changeFor": 0
+		  },
+		  "card": {"brand": "string"}
+		}
+	  ],
+	  "pending": 0,
+	  "prepaid": 0
+	},
+	"merchant": {"name": "string","id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"},
+	"salesChannel": "string",
+	"orderTiming": "IMMEDIATE",
+	"createdAt": "2021-05-23T14:57:03.193Z",
+	"total": {
+	  "benefits": 0,
+	  "deliveryFee": 0,
+	  "orderAmount": 0,
+	  "subTotal": 0
+	},
+	"preparationStartDateTime": "2021-05-23T14:57:03.193Z",
+	"id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+	"displayId": "string",
+	"items": [
+	  {
+		"unitPrice": 0,
+		"quantity": 0,
+		"externalCode": "string",
+		"totalPrice": 0,
+		"index": 0,
+		"unit": "string",
+		"ean": "string",
+		"price": 0,
+		"observations": "string",
+		"name": "string",
+		"options": [
+		  {
+			"unitPrice": 0,
+			"unit": "string",
+			"ean": "string",
+			"quantity": 0,
+			"externalCode": "string",
+			"price": 0,
+			"name": "string",
+			"index": 0,
+			"id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+		  }
+		],
+		"id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+		"optionsPrice": 0
+	  }
+	],
+	"customer": {
+	  "phone": {
+		"number": "string",
+		"localizer": "string",
+		"localizerExpiration": "2021-05-23T14:57:03.193Z"
+	  },
+	  "documentNumber": "string",
+	  "name": "string",
+	  "ordersCountOnMerchant": 0,
+	  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+	},
+	"extraInfo": "string",
+	"delivery": {
+	  "mode": "DEFAULT",
+	  "deliveredBy": "IFOOD",
+	  "deliveryAddress": {
+		"reference": "string",
+		"country": "string",
+		"streetName": "string",
+		"formattedAddress": "string",
+		"streetNumber": "string",
+		"city": "string",
+		"postalCode": "string",
+		"coordinates": {"latitude": 0,"longitude": 0},
+		"neighborhood": "string",
+		"state": "string",
+		"complement": "string"
+	  },
+	  "deliveryDateTime": "2021-05-23T14:57:03.193Z"
+	},
+	"schedule": {
+	  "deliveryDateTimeStart": "2021-05-23T14:57:03.193Z",
+	  "deliveryDateTimeEnd": "2021-05-23T14:57:03.193Z"
+	},
+	"indoor": {
+	  "mode": "DEFAULT",
+	  "deliveryDateTime": "2021-05-23T14:57:03.193Z",
+	  "table": "string"
+	},
+	"takeout": {"mode": "DEFAULT","takeoutDateTime": "2021-05-23T14:57:03.193Z"}
+}`
 
 func TestGetDetails_OK(t *testing.T) {
 	ts := httptest.NewServer(
@@ -910,4 +1016,80 @@ func Test_verifyCancel_InvalidCode(t *testing.T) {
 	err := verifyCancel("reference", "12344")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "is invalid, verify docs")
+}
+
+func Test_V2GetDetails_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, newV2Endpoint+"reference_id", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, v2OrderDetails)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	od, err := ordersService.V2GetDetails("reference_id")
+	assert.Nil(t, err)
+	assert.Equal(t, "3fa85f64-5717-4562-b3fc-2c963f66afa6", od.ID)
+}
+
+func Test_V2GetDetails_BadRequest(t *testing.T) {
+	resp := `{
+		"error": {
+			"code": "string",
+			"field": "string",
+			"details": [null],
+			"message": "bad request"
+		}
+	}`
+
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, newV2Endpoint+"reference_id", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodGet)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.V2GetDetails("reference_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, "bad request", err.Error())
+}
+
+func Test_V2GetDetails_NoOrderUUID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.V2GetDetails("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrOrderReferenceNotSpecified, err)
+}
+
+func Test_V2GetDetails_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("error"))
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	_, err := ordersService.V2GetDetails("98989898989")
+	assert.NotNil(t, err)
+	assert.Equal(t, "error", err.Error())
 }
