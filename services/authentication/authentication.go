@@ -93,8 +93,8 @@ func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 	headers["Content-Length"] = strconv.Itoa(len(data.Encode()))
-	reader := strings.NewReader(data.Encode())
-	resp, status, err := a.adapter.DoRequest(http.MethodPost, userCodeEndpoint, reader, headers)
+	body := strings.NewReader(data.Encode())
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, userCodeEndpoint, body, headers)
 	if err != nil {
 		glg.Error("[SDK] V2GetUserCode adapter.DoRequest: ", err.Error())
 		return

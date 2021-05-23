@@ -142,6 +142,7 @@ func TestV2Auth_OK(t *testing.T) {
 func TestV2Auth_RespNotOK(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/oauth/token", r.URL.Path)
 			require.Contains(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
 			w.WriteHeader(http.StatusBadRequest)
@@ -154,6 +155,55 @@ func TestV2Auth_RespNotOK(t *testing.T) {
 	assert.NotNil(t, as)
 	c, err := as.V2Authenticate("authorization_code", "testCode", "verifier", "refresh")
 	assert.Nil(t, c)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrUnauthorized, err)
+}
+
+func Test_V2GetUserCode_OK(t *testing.T) {
+	resp := `{
+		"userCode": "HJLX-LPSQ",
+		"authorizationCodeVerifier": "g58pczze01xqxo38iqozohexeviqrm86tfhcqf5qxz9453oknyk6dfb3a0tlsnt98zw4y40i9izeokdkwgzgtogsu2zx7wn4t2f",
+		"verificationUrl": "https://portal.ifood.com.br/apps/code",
+		"verificationUrlComplete": "https://portal.ifood.com.br/apps/code?c=HJLX-LPSQ",
+		"expiresIn": 600
+	  }`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodPost, r.Method)
+			require.Equal(t, userCodeEndpoint, r.URL.Path)
+			require.Equal(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	as := New(adapter, "client", "secret", false)
+	assert.NotNil(t, as)
+	uc, err := as.V2GetUserCode()
+	assert.Nil(t, err)
+	assert.Equal(t, "HJLX-LPSQ", uc.Usercode)
+	assert.Equal(t, "g58pczze01xqxo38iqozohexeviqrm86tfhcqf5qxz9453oknyk6dfb3a0tlsnt98zw4y40i9izeokdkwgzgtogsu2zx7wn4t2f", uc.AuthorizationCodeVerifier)
+	assert.Equal(t, "https://portal.ifood.com.br/apps/code", uc.VerificationURL)
+	assert.Equal(t, "https://portal.ifood.com.br/apps/code?c=HJLX-LPSQ", uc.VerificationURLComplete)
+}
+
+func Test_V2GetUserCode_ErrUnauthorized(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodPost, r.Method)
+			require.Equal(t, userCodeEndpoint, r.URL.Path)
+			require.Equal(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": {"code": "BadRequest","message": "Invalid"}}`)
+		}),
+	)
+	defer ts.Close()
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	as := New(adapter, "client", "secret", false)
+	assert.NotNil(t, as)
+	uc, err := as.V2GetUserCode()
+	assert.Nil(t, uc)
 	assert.NotNil(t, err)
 	assert.Equal(t, ErrUnauthorized, err)
 }
