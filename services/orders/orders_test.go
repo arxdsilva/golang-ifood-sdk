@@ -1049,7 +1049,6 @@ func Test_V2GetDetails_BadRequest(t *testing.T) {
 			"message": "bad request"
 		}
 	}`
-
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, newV2Endpoint+"reference_id", r.URL.Path)
@@ -1092,4 +1091,77 @@ func Test_V2GetDetails_ValidateErr(t *testing.T) {
 	_, err := ordersService.V2GetDetails("98989898989")
 	assert.NotNil(t, err)
 	assert.Equal(t, "error", err.Error())
+}
+
+func Test_V2SetConfirmStatus_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, newV2Endpoint+"reference_id/confirm", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusAccepted)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetConfirmStatus("reference_id")
+	assert.Nil(t, err)
+}
+
+func Test_V2SetConfirmStatus_BadRequest(t *testing.T) {
+	resp := `{
+		"error": {
+			"code": "string",
+			"field": "string",
+			"details": [null],
+			"message": "bad request"
+		}
+	}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, newV2Endpoint+"reference_id/confirm", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetConfirmStatus("reference_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, "bad request", err.Error())
+}
+
+func Test_V2SetConfirmStatus_NoRID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetConfirmStatus("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrOrderReferenceNotSpecified, err)
+}
+
+func Test_V2SetConfirmStatus_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("validate err"))
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetConfirmStatus("123123123")
+	assert.NotNil(t, err)
+	assert.Equal(t, "validate err", err.Error())
 }
