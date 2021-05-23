@@ -71,3 +71,51 @@ func TestAuth_BadResp(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "JSON")
 }
+
+func Test_verifyV2Inputs_ErrGrantType(t *testing.T) {
+	authType := ""
+	authCode := ""
+	authCodeVerifier := ""
+	refreshToken := ""
+	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrGrantType, err)
+}
+
+func Test_verifyV2Inputs_ErrNoAuthCodeOrVerifier(t *testing.T) {
+	authType := "authorization_code"
+	authCode := ""
+	authCodeVerifier := ""
+	refreshToken := ""
+	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoAuthCodeOrVerifier, err)
+}
+
+func Test_verifyV2Inputs_ErrNoRefreshToken(t *testing.T) {
+	authType := "refresh_token"
+	authCode := "testCode"
+	authCodeVerifier := "testToken"
+	refreshToken := ""
+	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrNoRefreshToken, err)
+}
+
+func Test_verifyV2Inputs_OK_authorization_code(t *testing.T) {
+	authType := "authorization_code"
+	authCode := "testCode"
+	authCodeVerifier := "testToken"
+	refreshToken := ""
+	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
+	assert.Nil(t, err)
+}
+
+func Test_verifyV2Inputs_OK_refresh_token(t *testing.T) {
+	authType := "refresh_token"
+	authCode := ""
+	authCodeVerifier := ""
+	refreshToken := "TOKEN"
+	err := verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken)
+	assert.Nil(t, err)
+}
