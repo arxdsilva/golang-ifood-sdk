@@ -29,9 +29,10 @@ var ErrNotFound = errors.New("EVENTS POLL REQUEST RETURNED NOT FOUND")
 type (
 	// Service describes the event abstraction
 	Service interface {
-		V2Poll() (ml []V2Event, err error)
 		Poll() ([]Event, error)
+		V2Poll() (ml []V2Event, err error)
 		Acknowledge([]Event) (err error)
+		V2Acknowledge([]V2Event) (err error)
 	}
 
 	eventACK struct {
@@ -80,7 +81,7 @@ type (
 )
 
 // New returns the event service implementation
-func New(adapter adapters.Http, authService auth.Service, v2 bool) *eventService {
+func New(adapter adapters.Http, authService auth.Service, v2 bool) Service {
 	return &eventService{adapter, authService, v2}
 }
 

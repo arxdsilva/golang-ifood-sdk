@@ -51,10 +51,11 @@ var (
 type (
 	// Service determinates the order's interface
 	Service interface {
-		V2GetDetails(reference string) (V2OrderDetails, error)
 		GetDetails(reference string) (OrderDetails, error)
+		V2GetDetails(reference string) (V2OrderDetails, error)
 		SetIntegrateStatus(reference string) error
 		SetConfirmStatus(reference string) error
+		V2SetConfirmStatus(reference string) error
 		SetDispatchStatus(reference string) error
 		SetReadyToDeliverStatus(reference string) error
 		SetCancelStatus(reference, code string) error
@@ -70,7 +71,7 @@ type (
 )
 
 // New returns a new order service
-func New(adapter adapters.Http, authService auth.Service) *ordersService {
+func New(adapter adapters.Http, authService auth.Service) Service {
 	return &ordersService{adapter, authService}
 }
 
@@ -182,6 +183,36 @@ func (o *ordersService) SetConfirmStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetConfirmStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference '%s' could not be confirmed", orderReference)
 		glg.Error("[SDK] Orders SetConfirmStatus err: ", err)
+		return
+	}
+	return
+}
+
+// V2SetConfirmStatus trys to update an order to confirmed status
+func (o *ordersService) V2SetConfirmStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] (Orders V2SetConfirmStatus): ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetConfirmStatus) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s/confirm", newV2Endpoint, orderReference)
+	resp, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetConfirmStatus) adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders V2SetConfirmStatus) status '%d' err: '%s'", status, err.Error())
 		return
 	}
 	return

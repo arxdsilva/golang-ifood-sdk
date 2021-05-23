@@ -32,8 +32,8 @@ type (
 	// Service describes the auth service abstraction
 	Service interface {
 		V2GetUserCode() (*UserCode, error)
-		V2Authenticate(authType, authCode, authCodeVerifier, refreshToken string) (c *V2Credentials, err error)
 		Authenticate(username, password string) (*Credentials, error)
+		V2Authenticate(authType, authCode, authCodeVerifier, refreshToken string) (c *V2Credentials, err error)
 		Validate() error
 		GetToken() string
 	}
@@ -83,7 +83,7 @@ type (
 )
 
 // New returns an auth service implementation
-func New(adapter adapters.Http, clientId, clientSecret string, v2 bool) *authService {
+func New(adapter adapters.Http, clientId, clientSecret string, v2 bool) Service {
 	return &authService{adapter: adapter, clientId: clientId, clientSecret: clientSecret, v2: v2}
 }
 
