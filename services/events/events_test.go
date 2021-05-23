@@ -407,3 +407,112 @@ func Test_V2Poll_ValidateErr(t *testing.T) {
 	assert.Equal(t, 0, len(events))
 	assert.Equal(t, "error", err.Error())
 }
+
+func Test_V2Acknowledge_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, r.Header["Content-Type"][0], "application/json")
+			require.Equal(t, r.Header["Cache-Control"][0], "no-cache")
+			require.NotNil(t, r.Header["Authorization"][0])
+			require.Equal(t, "/order/v1.0/acknowledgment", r.URL.Path)
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusAccepted)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	eventsService := New(adapter, &am, false)
+	assert.NotNil(t, eventsService)
+	events := V2Events{}
+	err := json.Unmarshal([]byte(pollV2APIResponse), &events)
+	assert.Nil(t, err)
+	err = eventsService.V2Acknowledge(events)
+	assert.Nil(t, err)
+}
+
+func Test_V2Acknowledge_BadRequest(t *testing.T) {
+	resp := `{
+	"error": {
+		"code": "string",
+		"field": "string",
+		"details": [null],
+		"message": "bad request"
+	}
+}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, r.Header["Content-Type"][0], "application/json")
+			require.Equal(t, r.Header["Cache-Control"][0], "no-cache")
+			require.NotNil(t, r.Header["Authorization"][0])
+			require.Equal(t, "/order/v1.0/acknowledgment", r.URL.Path)
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	eventsService := New(adapter, &am, false)
+	assert.NotNil(t, eventsService)
+	events := V2Events{}
+	err := json.Unmarshal([]byte(pollV2APIResponse), &events)
+	assert.Nil(t, err)
+	err = eventsService.V2Acknowledge(events)
+	assert.NotNil(t, err)
+	assert.Equal(t, "bad request", err.Error())
+}
+
+func Test_V2Acknowledge_Forbidden(t *testing.T) {
+	resp := `{
+	"error": {
+		"code": "string",
+		"field": "string",
+		"details": [null],
+		"message": "forbidden"
+	}
+}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, r.Header["Content-Type"][0], "application/json")
+			require.Equal(t, r.Header["Cache-Control"][0], "no-cache")
+			require.NotNil(t, r.Header["Authorization"][0])
+			require.Equal(t, "/order/v1.0/acknowledgment", r.URL.Path)
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	eventsService := New(adapter, &am, false)
+	assert.NotNil(t, eventsService)
+	events := V2Events{}
+	err := json.Unmarshal([]byte(pollV2APIResponse), &events)
+	assert.Nil(t, err)
+	err = eventsService.V2Acknowledge(events)
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrUnauthorized, err)
+}
+
+func Test_V2Acknowledge_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("validate"))
+	adapter := httpadapter.New(http.DefaultClient, "")
+	eventsService := New(adapter, &am, false)
+	assert.NotNil(t, eventsService)
+	events := V2Events{}
+	err := json.Unmarshal([]byte(pollV2APIResponse), &events)
+	assert.Nil(t, err)
+	err = eventsService.V2Acknowledge(events)
+	assert.NotNil(t, err)
+	assert.Equal(t, "validate", err.Error())
+}

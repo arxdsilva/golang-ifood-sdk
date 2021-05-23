@@ -40,6 +40,8 @@ type (
 
 	// Events is a group of Event
 	Events []Event
+	// V2Events is a group of Event
+	V2Events []V2Event
 
 	// Event returned by the API
 	Event struct {
@@ -59,7 +61,7 @@ type (
 		ID        string                 `json:"id"`
 	}
 
-	errV2Polling struct {
+	errV2API struct {
 		Error struct {
 			Code    string        `json:"code"`
 			Field   string        `json:"field"`
@@ -149,7 +151,7 @@ func (ev *eventService) V2Poll() (ml []V2Event, err error) {
 		return
 	}
 	if status != http.StatusOK {
-		errMsg := errV2Polling{}
+		errMsg := errV2API{}
 		json.Unmarshal(resp, &errMsg)
 		err = errors.New(errMsg.Error.Message)
 		glg.Errorf("[SDK] (Event V2Poll) adapter.DoRequest status '%d' api message:'%s'", status, errMsg.Error.Message)
@@ -197,5 +199,46 @@ func (ev *eventService) Acknowledge(events []Event) (err error) {
 		return
 	}
 	glg.Info("[SDK] Acknowledge was successfull")
+	return
+}
+
+// V2Acknowledge queries the iFood API to set events as 'polled'
+func (ev *eventService) V2Acknowledge(events []V2Event) (err error) {
+	err = ev.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Event V2ACK) auth.Validate: ", err.Error())
+		return
+	}
+	body, err := httpadapter.NewJsonReader(events)
+	if err != nil {
+		glg.Error("[SDK] (Event V2ACK) NewJsonReader: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+	headers["Cache-Control"] = "no-cache"
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", ev.auth.GetToken())
+	endpoint := v2APIEndpoint + "/acknowledgment"
+	resp, status, err := ev.adapter.DoRequest(
+		http.MethodPost, endpoint, body, headers)
+	if err != nil {
+		glg.Error("[SDK] (Event V2ACK) adapter.DoRequest: ", err.Error())
+		return
+	}
+	if status == http.StatusForbidden {
+		glg.Warn("[SDK] (Event V2ACK) AUTH error status code: ", status)
+		err = ErrUnauthorized
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := errV2API{}
+		json.Unmarshal(resp, &errMsg)
+		fmt.Println(string(resp))
+		fmt.Println(errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Errorf("[SDK] (Event V2ACK) Acknowledge status '%d' err: %s", status, err.Error())
+		return
+	}
+	glg.Info("[SDK] (Event V2ACK) was successfull")
 	return
 }
