@@ -9,8 +9,10 @@ import (
 	"testing"
 
 	httpadapter "github.com/arxdsilva/golang-ifood-sdk/adapters/http"
+	"github.com/arxdsilva/golang-ifood-sdk/mocks"
 	auth "github.com/arxdsilva/golang-ifood-sdk/services/authentication"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -515,4 +517,64 @@ func Test_V2Acknowledge_ValidateErr(t *testing.T) {
 	err = eventsService.V2Acknowledge(events)
 	assert.NotNil(t, err)
 	assert.Equal(t, "validate", err.Error())
+}
+
+func Test_V2Acknowledge_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	service := New(adapter, &am, true)
+	assert.NotNil(t, service)
+	events := V2Events{}
+	err := json.Unmarshal([]byte(pollV2APIResponse), &events)
+	err = service.V2Acknowledge(events)
+	assert.NotNil(t, err)
+	assert.Equal(t, "some err", err.Error())
+}
+
+func Test_Acknowledge_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	service := New(adapter, &am, true)
+	assert.NotNil(t, service)
+	events := Events{}
+	err := json.Unmarshal([]byte(pollAPIResponse), &events)
+	err = service.Acknowledge(events)
+	assert.NotNil(t, err)
+	assert.Equal(t, "some err", err.Error())
+}
+
+func Test_V2Poll_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	service := New(adapter, &am, true)
+	assert.NotNil(t, service)
+	_, err := service.V2Poll()
+	assert.NotNil(t, err)
+	assert.Equal(t, "some err", err.Error())
+}
+
+func Test_Poll_DoReqErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	httpmock := &mocks.HttpClientMock{}
+	httpmock.On("Do", mock.Anything).Once().Return(nil, errors.New("some err"))
+	adapter := httpadapter.New(httpmock, "")
+	service := New(adapter, &am, false)
+	assert.NotNil(t, service)
+	_, err := service.Poll()
+	assert.NotNil(t, err)
+	assert.Equal(t, "some err", err.Error())
 }
