@@ -63,6 +63,7 @@ type (
 		SetCancelStatus(reference, code string) error
 		V2RequestCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
+		V2ClientCancellationStatus(reference string, accepted bool) error
 		Tracking(orderUUID string) (TrackingResponse, error)
 		DeliveryInformation(orderUUID string) (DeliveryInformationResponse, error)
 	}
@@ -456,6 +457,40 @@ func (o *ordersService) ClientCancellationStatus(orderReference string, accepted
 		return
 	}
 	glg.Debugf("[SDK] (Orders ClientCancellationStatus) '%s' OK", orderReference)
+	return
+}
+
+// V2AcceptCancellationStatus lida com o cancelamento do pedido por parte do cliente
+func (o *ordersService) V2ClientCancellationStatus(orderReference string, accepted bool) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] Orders V2AcceptCancellationStatus: ", err.Error())
+		return
+	}
+	if err = o.auth.Validate(); err != nil {
+		glg.Error("[SDK] Orders V2AcceptCancellationStatus auth.Validate: ", err.Error())
+		return
+	}
+	cancelStatus := "denyCancellation"
+	if accepted {
+		cancelStatus = "acceptCancellation"
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s/%s", newV2Endpoint, orderReference, cancelStatus)
+	resp, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] Orders V2AcceptCancellationStatus adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders::V2AcceptCancellationStatus) status '%d' err: '%s'", status, err.Error())
+		return
+	}
+	glg.Debugf("[SDK] (Orders V2AcceptCancellationStatus) '%s' OK", orderReference)
 	return
 }
 
