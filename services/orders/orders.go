@@ -57,6 +57,7 @@ type (
 		SetConfirmStatus(reference string) error
 		V2SetConfirmStatus(reference string) error
 		SetDispatchStatus(reference string) error
+		V2SetDispatchStatus(reference string) error
 		SetReadyToDeliverStatus(reference string) error
 		SetCancelStatus(reference, code string) error
 		ClientCancellationStatus(reference string, accepted bool) error
@@ -241,6 +242,35 @@ func (o *ordersService) SetDispatchStatus(orderReference string) (err error) {
 		glg.Error("[SDK] Orders SetDispatchStatus status code: ", status, " orderReference: ", orderReference)
 		err = fmt.Errorf("Order reference '%s' could not be dispatched", orderReference)
 		glg.Error("[SDK] Orders SetDispatchStatus err: ", err)
+		return
+	}
+	return
+}
+
+func (o *ordersService) V2SetDispatchStatus(orderReference string) (err error) {
+	if orderReference == "" {
+		err = ErrOrderReferenceNotSpecified
+		glg.Error("[SDK] (Orders V2SetDispatchStatus): ", err.Error())
+		return
+	}
+	err = o.auth.Validate()
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetDispatchStatus) auth.Validate: ", err.Error())
+		return
+	}
+	headers := make(map[string]string)
+	headers["Authorization"] = fmt.Sprintf("Bearer %s", o.auth.GetToken())
+	endpoint := fmt.Sprintf("%s%s/dispatch", newV2Endpoint, orderReference)
+	resp, status, err := o.adapter.DoRequest(http.MethodPost, endpoint, nil, headers)
+	if err != nil {
+		glg.Error("[SDK] (Orders V2SetDispatchStatus) adapter.DoRequest error: ", err.Error())
+		return
+	}
+	if status != http.StatusAccepted {
+		errMsg := events.ErrV2API{}
+		json.Unmarshal(resp, &errMsg)
+		err = errors.New(errMsg.Error.Message)
+		glg.Error("[SDK] (Orders V2SetDispatchStatus) status '%d' err: '%s'", status, err.Error())
 		return
 	}
 	return
