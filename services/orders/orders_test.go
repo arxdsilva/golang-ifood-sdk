@@ -1238,3 +1238,76 @@ func Test_V2SetDispatchStatus_ValidateErr(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "validate err", err.Error())
 }
+
+func Test_V2SetReadyToPickupStatus_NoRID(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetReadyToPickupStatus("")
+	assert.NotNil(t, err)
+	assert.Equal(t, ErrOrderReferenceNotSpecified, err)
+}
+
+func Test_V2SetReadyToPickupStatus_ValidateErr(t *testing.T) {
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(errors.New("validate err"))
+	adapter := httpadapter.New(http.DefaultClient, "")
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetReadyToPickupStatus("123123123")
+	assert.NotNil(t, err)
+	assert.Equal(t, "validate err", err.Error())
+}
+
+func Test_V2SetReadyToPickupStatus_OK(t *testing.T) {
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/order/v1.0/orders/reference_id/readyToPickup", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusAccepted)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetReadyToPickupStatus("reference_id")
+	assert.Nil(t, err)
+}
+
+func Test_V2SetReadyToPickupStatus_BadRequest(t *testing.T) {
+	resp := `{
+		"error": {
+			"code": "string",
+			"field": "string",
+			"details": [null],
+			"message": "bad request"
+		}
+	}`
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, newV2Endpoint+"reference_id/readyToPickup", r.URL.Path)
+			require.Equal(t, "Bearer token", r.Header["Authorization"][0])
+			require.Equal(t, r.Method, http.MethodPost)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, resp)
+		}),
+	)
+	defer ts.Close()
+	am := auth.AuthMock{}
+	am.On("Validate").Once().Return(nil)
+	am.On("GetToken").Once().Return("token")
+	adapter := httpadapter.New(http.DefaultClient, ts.URL)
+	ordersService := New(adapter, &am)
+	assert.NotNil(t, ordersService)
+	err := ordersService.V2SetReadyToPickupStatus("reference_id")
+	assert.NotNil(t, err)
+	assert.Equal(t, "bad request", err.Error())
+}
