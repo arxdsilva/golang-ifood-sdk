@@ -236,8 +236,6 @@ func (ev *eventService) V2Acknowledge(events []V2Event) (err error) {
 	if status != http.StatusAccepted {
 		errMsg := ErrV2API{}
 		json.Unmarshal(resp, &errMsg)
-		fmt.Println(string(resp))
-		fmt.Println(errMsg)
 		err = errors.New(errMsg.Error.Message)
 		glg.Errorf("[SDK] (Event V2ACK) Acknowledge status '%d' err: %s", status, err.Error())
 		return
