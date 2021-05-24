@@ -62,6 +62,10 @@ func (c *Container) GetHttpAdapter() adapters.Http {
 		}
 		c.httpadapter = httpadapter.New(client, urlProduction)
 	case EnvSandBox:
+		if c.v2 {
+			c.httpadapter = httpadapter.New(client, v2urlProduction)
+			return c.httpadapter
+		}
 		c.httpadapter = httpadapter.New(client, urlSandbox)
 	}
 	return c.httpadapter
