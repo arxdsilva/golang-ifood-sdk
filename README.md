@@ -39,8 +39,7 @@ func main() {
     }
     err = container.EventsService.V2Acknowledge(events)
     if err != nil {
-        fmt.Println("err: ", err)
-        continue
+        log.Fatal(err)
     }
     var newOrdersDetails []orders.OrderDetails
 	for _, event := range events {
