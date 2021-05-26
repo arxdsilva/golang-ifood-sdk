@@ -96,16 +96,16 @@ func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
 	body := strings.NewReader(data.Encode())
 	resp, status, err := a.adapter.DoRequest(http.MethodPost, userCodeEndpoint, body, headers)
 	if err != nil {
-		glg.Error("[SDK] V2GetUserCode adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] (V2GetUserCode::DoRequest) error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] V2GetUserCode: status code ", status)
+		glg.Warn("[SDK] (V2GetUserCode::status.check): status code ", status)
 		err = ErrUnauthorized
 		return
 	}
 	if err = json.Unmarshal(resp, &uc); err != nil {
-		glg.Error("[SDK] Unmarshal: ", err)
+		glg.Error("[SDK] (V2GetUserCode::Unmarshal) error: ", err)
 		return
 	}
 	glg.Info("[SDK] V2GetUserCode success")
@@ -115,7 +115,7 @@ func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
 // V2Authenticate queries the iFood API for a credential
 func (a *authService) V2Authenticate(authType, authCode, authCodeVerifier, refreshToken string) (c *V2Credentials, err error) {
 	if err = verifyV2Inputs(authType, authCode, authCodeVerifier, refreshToken); err != nil {
-		glg.Error("[SDK] V2Authenticate verifyV2Inputs: ", err.Error())
+		glg.Error("[SDK] (V2Authenticate::verifyV2Inputs) error: ", err.Error())
 		return
 	}
 	data := url.Values{}
@@ -131,24 +131,24 @@ func (a *authService) V2Authenticate(authType, authCode, authCodeVerifier, refre
 	body := strings.NewReader(data.Encode())
 	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, body, headers)
 	if err != nil {
-		glg.Error("[SDK] V2Authenticate adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] (V2Authenticate::DoRequest) error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
 		glg.Warn("[SDK] V2Authenticate: status code ", status)
 		authErr := authError{}
 		json.Unmarshal(resp, &authErr)
-		warn := fmt.Sprintf("[SDK] V2GetUserCode: code '%s' message '%s'",
+		warn := fmt.Sprintf("[SDK] (V2GetUserCode::status.code): code '%s' message '%s'",
 			authErr.Error.Code, authErr.Error.Message)
 		glg.Warn(warn)
 		err = ErrUnauthorized
 		return
 	}
 	if err = json.Unmarshal(resp, &c); err != nil {
-		glg.Error("[SDK] Unmarshal: ", err)
+		glg.Error("[SDK] (V2Authenticate::Unmarshal) error: ", err)
 		return
 	}
-	glg.Info("[SDK] V2Authenticate success")
+	glg.Info("[SDK] (V2Authenticate) success")
 	a.currentExpiration = time.Now().Add(time.Hour * 6)
 	a.Token = c.AccessToken
 	a.refreshToken = c.RefreshToken
@@ -165,7 +165,7 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 	writer.WriteField("username", username)
 	writer.WriteField("password", password)
 	if err = writer.Close(); err != nil {
-		glg.Error("[SDK] Auth writer.Close: ", err.Error())
+		glg.Error("[SDK] (Auth::writer.Close) error: ", err.Error())
 		return
 	}
 	reader := bytes.NewReader(payload.Bytes())
@@ -174,19 +174,19 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 	headers["Accept"] = "*/*"
 	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, reader, headers)
 	if err != nil {
-		glg.Error("[SDK] Auth adapter.DoRequest: ", err.Error())
+		glg.Error("[SDK] (Auth::DoRequest) error: ", err.Error())
 		return
 	}
 	if status != http.StatusOK {
-		glg.Warn("[SDK] Auth: status code ", status)
+		glg.Warn("[SDK] (Auth::status.code): status code ", status)
 		err = ErrUnauthorized
 		return
 	}
 	if err = json.Unmarshal(resp, &c); err != nil {
-		glg.Error("[SDK] Unmarshal: ", err)
+		glg.Error("[SDK] (Auth::Unmarshal) error: ", err)
 		return
 	}
-	glg.Info("[SDK] Authenticate success")
+	glg.Info("[SDK] (Authenticate) success")
 	a.currentExpiration = time.Now().Add(time.Hour)
 	a.username = username
 	a.password = password
@@ -197,10 +197,10 @@ func (a *authService) Authenticate(username, password string) (c *Credentials, e
 // Validate validates or renews a token auth
 func (a *authService) Validate() (err error) {
 	if !time.Now().After(a.currentExpiration) {
-		glg.Debug("[SDK] Validate not time")
+		glg.Debug("[SDK] (auth::Validate) not time")
 		return
 	}
-	glg.Info("[SDK] Validate Renew Auth")
+	glg.Info("[SDK] (auth::Validate) Renewing Auth")
 	if a.v2 {
 		_, err = a.V2Authenticate("refresh_token", "", "", a.refreshToken)
 		return
