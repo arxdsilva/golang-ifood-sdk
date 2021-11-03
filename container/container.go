@@ -2,6 +2,8 @@ package container
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/arxdsilva/golang-ifood-sdk/adapters"
@@ -42,6 +44,19 @@ func Create(clientId, clientSecret string, env int, v2 bool) (c *Container) {
 	c.GetEventsService()
 	c.GetOrdersService()
 	return
+}
+
+// CreateFromEnvs creates a new instance of the container struct
+// from envs
+// 		"IFOOD_CLIENT_ID"
+// 		"IFOOD_CLIENT_SECRET"
+//		"IFOOD_ENV" (default to Production)
+//		always uses the api v2
+func CreateFromEnvs() (c *Container) {
+	clientID := os.Getenv("IFOOD_CLIENT_ID")
+	clientSecret := os.Getenv("IFOOD_CLIENT_SECRET")
+	env, _ := strconv.Atoi(os.Getenv("IFOOD_ENV"))
+	return Create(clientID, clientSecret, env, true)
 }
 
 // GetHttpAdapter returns new HTTP adapter according to the env
