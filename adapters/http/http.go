@@ -25,9 +25,9 @@ type httpAdapter struct {
 
 var (
 	// ErrorNilData no data
-	ErrorNilData = errors.New("No data to parse ")
+	ErrorNilData = errors.New("no data to parse ")
 	// ErrorNilAuth no auth service
-	ErrorNilAuth = errors.New("No auth to parse ")
+	ErrorNilAuth = errors.New("no auth to parse ")
 )
 
 // New returns an httpAdapter
@@ -36,7 +36,8 @@ func New(client HTTPClient, baseUrl string) *httpAdapter {
 }
 
 // DoRequest is the httpAdapter requester
-func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers map[string]string) ([]byte, int, error) {
+func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers map[string]string) (response []byte, status int, err error) {
+	glg.Debugf("[DoRequest]: method:%v, url:%v\n", method, h.baseUrl+path)
 	request, err := http.NewRequest(method, h.baseUrl+path, reader)
 	if err != nil {
 		return nil, 0, err
@@ -50,6 +51,7 @@ func (h *httpAdapter) DoRequest(method, path string, reader io.Reader, headers m
 	}
 	defer closeBodyReader(resp.Body)
 	result, err := ioutil.ReadAll(resp.Body)
+	glg.Debug("[DoRequest]: resp ", string(result))
 	return result, resp.StatusCode, err
 }
 
