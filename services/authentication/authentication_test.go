@@ -124,7 +124,7 @@ func Test_verifyV2Inputs_OK_refresh_token(t *testing.T) {
 func TestV2Auth_OK(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			require.Equal(t, "/oauth/token", r.URL.Path)
+			require.Equal(t, "/authentication/v1.0/oauth/token", r.URL.Path)
 			require.Contains(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
 			fmt.Fprintf(w, `{"accessToken":"token","expiresIn":3600}`)
 			w.WriteHeader(http.StatusOK)
@@ -143,7 +143,7 @@ func TestV2Auth_RespNotOK(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
-			require.Equal(t, "/oauth/token", r.URL.Path)
+			require.Equal(t, "/authentication/v1.0/oauth/token", r.URL.Path)
 			require.Contains(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, `{"error": {"code": "BadRequest","message": "Invalid grant type"}}`)
@@ -170,7 +170,7 @@ func Test_V2GetUserCode_OK(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
-			require.Equal(t, userCodeEndpoint, r.URL.Path)
+			require.Equal(t, "/authentication/v1.0"+userCodeEndpoint, r.URL.Path)
 			require.Equal(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, resp)
@@ -192,7 +192,7 @@ func Test_V2GetUserCode_ErrUnauthorized(t *testing.T) {
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
-			require.Equal(t, userCodeEndpoint, r.URL.Path)
+			require.Equal(t, "/authentication/v1.0"+userCodeEndpoint, r.URL.Path)
 			require.Equal(t, r.Header["Content-Type"][0], "application/x-www-form-urlencoded")
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, `{"error": {"code": "BadRequest","message": "Invalid"}}`)
