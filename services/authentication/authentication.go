@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 )
 
 const (
+	authRoot         = "/authentication/v1.0"
 	authEndpoint     = "/oauth/token"
 	userCodeEndpoint = "/oauth/userCode"
 	valueGrantType   = "password"
@@ -76,8 +76,6 @@ type (
 		currentExpiration      time.Time
 		Token                  string
 		refreshToken           string
-		authCode               string
-		authCodeVerifier       string
 		v2                     bool
 	}
 )
@@ -88,13 +86,12 @@ func New(adapter adapters.Http, clientId, clientSecret string, v2 bool) Service 
 }
 
 func (a *authService) V2GetUserCode() (uc *UserCode, err error) {
-	data := url.Values{}
-	data.Set("client_id", a.clientId)
+	params := url.Values{}
+	params.Add("clientId", a.clientId)
+	body := strings.NewReader(params.Encode())
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	headers["Content-Length"] = strconv.Itoa(len(data.Encode()))
-	body := strings.NewReader(data.Encode())
-	resp, status, err := a.adapter.DoRequest(http.MethodPost, userCodeEndpoint, body, headers)
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, authRoot+userCodeEndpoint, body, headers)
 	if err != nil {
 		glg.Error("[SDK] (V2GetUserCode::DoRequest) error: ", err.Error())
 		return
@@ -127,9 +124,8 @@ func (a *authService) V2Authenticate(authType, authCode, authCodeVerifier, refre
 	data.Set("refreshToken", refreshToken)
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
-	headers["Content-Length"] = strconv.Itoa(len(data.Encode()))
 	body := strings.NewReader(data.Encode())
-	resp, status, err := a.adapter.DoRequest(http.MethodPost, authEndpoint, body, headers)
+	resp, status, err := a.adapter.DoRequest(http.MethodPost, authRoot+authEndpoint, body, headers)
 	if err != nil {
 		glg.Error("[SDK] (V2Authenticate::DoRequest) error: ", err.Error())
 		return
