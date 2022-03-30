@@ -9,14 +9,10 @@ jobs:
     strategy:
       matrix:
         go-version: [1.17.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: print event env
       env:
-        EVENT_CONTEXT: ${{ toJSON(github.event) }}
-      run: echo $EVENT_CONTEXT
-    - name: print client_payload
-      run: echo ${{ github.event.client_payload }}
-    - name: print client_payload example
-      run: echo ${{ github.event.client_payload.example }}
+        EVENT_PAYLOAD: ${{ toJSON(github.event.payload) }}
+      run: echo $EVENT_PAYLOAD
