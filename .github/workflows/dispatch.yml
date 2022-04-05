@@ -14,5 +14,5 @@ jobs:
     steps:
     - name: print event env
       env:
-        EVENT_PAYLOAD: ${{ toJSON(github.event.payload) }}
+        EVENT_PAYLOAD: ${{ toJSON(github.event.client_payload) }}
       run: echo $EVENT_PAYLOAD
